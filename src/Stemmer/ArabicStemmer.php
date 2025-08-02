@@ -54,11 +54,7 @@ class ArabicStemmer implements StemmerInterface
             self::$_verbMaxPre, self::$_verbMaxPost, self::$_verbMinStem
         );
         
-        if (mb_strlen($nounStem, 'UTF-8') < mb_strlen($verbStem, 'UTF-8')) {
-            $stem = $nounStem;
-        } else {
-            $stem = $verbStem;
-        }
+        $stem = (mb_strlen($nounStem, 'UTF-8') < mb_strlen($verbStem, 'UTF-8')) ? $nounStem : $verbStem;
         
         return $stem;
     }
@@ -118,11 +114,9 @@ class ArabicStemmer implements StemmerInterface
             }
         }
 
-        if ($left - $right >= $minStem) {
-            $stem = mb_substr($word, $right, $left-$right+1, 'UTF-8');
-        } else {
-            $stem = null;
-        }
+        $stem = ($left - $right >= $minStem)
+            ? mb_substr($word, $right, $left - $right + 1, 'UTF-8')
+            : null;
 
         return $stem;
     }

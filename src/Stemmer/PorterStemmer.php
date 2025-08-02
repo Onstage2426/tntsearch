@@ -344,8 +344,8 @@ class PorterStemmer implements StemmerInterface
 
         if (substr($str, $len) == $check) {
             $substr = substr($str, 0, $len);
-            if (is_null($m) || self::m($substr) > $m) {
-                $str = $substr.$repl;
+            if ($m === null || self::m($substr) > $m) {
+                $str = "{$substr}{$repl}";
             }
 
             return true;

@@ -285,21 +285,23 @@ class SqliteEngine implements EngineInterface
 
             } catch (\Exception $e) {
 
-                if ($e->getCode() == 23000) {
-                    $this->updateWordlistStmt->bindValue(':docs', $term['docs']);
-                    $this->updateWordlistStmt->bindValue(':hits', $term['hits']);
-                    $this->updateWordlistStmt->bindValue(':keyword', $key);
-                    $this->updateWordlistStmt->execute();
-                    if (!$this->inMemory) {
-                        $this->selectWordlistStmt->bindValue(':keyword', $key);
-                        $this->selectWordlistStmt->execute();
-                        $res = $this->selectWordlistStmt->fetch(PDO::FETCH_ASSOC);
-                        $terms[$key]['id'] = $res['id'];
-                    } else {
-                        $terms[$key]['id'] = $this->inMemoryTerms[$key];
-                    }
-                } else {
-                    echo "Error while saving wordlist: " . $e->getMessage() . "\n";
+                switch($e->getCode()) {
+                    case 23000:
+                        $this->updateWordlistStmt->bindValue(':docs', $term['docs']);
+                        $this->updateWordlistStmt->bindValue(':hits', $term['hits']);
+                        $this->updateWordlistStmt->bindValue(':keyword', $key);
+                        $this->updateWordlistStmt->execute();
+                        if (!$this->inMemory) {
+                            $this->selectWordlistStmt->bindValue(':keyword', $key);
+                            $this->selectWordlistStmt->execute();
+                            $res = $this->selectWordlistStmt->fetch(PDO::FETCH_ASSOC);
+                            $terms[$key]['id'] = $res['id'];
+                        } else {
+                            $terms[$key]['id'] = $this->inMemoryTerms[$key];
+                        }
+                        break;
+                    default:
+                        echo "Error while saving wordlist: " . $e->getMessage() . "\n";
                 }
 
                 // Statements must be refreshed, because in this state they have error attached to them.
@@ -352,7 +354,7 @@ class SqliteEngine implements EngineInterface
         $counter = 0;
 
         foreach ($objects as $name => $object) {
-            $name = str_replace($path . '/', '', $name);
+            $name = str_replace("{$path}/", '', $name);
 
             if (is_callable($this->config['extension'])) {
                 $includeFile = $this->config['extension']($object);
@@ -505,7 +507,7 @@ class SqliteEngine implements EngineInterface
         if (!file_exists($pathToIndex)) {
             throw new IndexNotFoundException("Index {$pathToIndex} does not exist", 1);
         }
-        $this->index = new PDO('sqlite:' . $pathToIndex);
+        $this->index = new PDO("sqlite:{$pathToIndex}");
         $this->index->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 

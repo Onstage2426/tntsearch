@@ -139,7 +139,7 @@ class PortugueseStemmer implements StemmerInterface
      */
     private static function r1($word, &$r1, &$r1Index)
     {
-        list($index, $value) = self::rx($word);
+        [$index, $value] = self::rx($word);
 
         $r1      = $value;
         $r1Index = $index;
@@ -152,7 +152,7 @@ class PortugueseStemmer implements StemmerInterface
      */
     private static function r2($r1, $r1Index, &$r2, &$r2Index)
     {
-        list($index, $value) = self::rx($r1);
+        [$index, $value] = self::rx($r1);
 
         $r2      = $value;
         $r2Index = $r1Index + $index;
@@ -191,7 +191,7 @@ class PortugueseStemmer implements StemmerInterface
 
             if (!in_array($letter, static::$vowels)) {
                 $index = $after + 1;
-                $value = self::substr($in, ($after + 1));
+                $value = self::substr($in, $after + 1);
                 break;
             }
         }
@@ -224,7 +224,7 @@ class PortugueseStemmer implements StemmerInterface
                 $letter = self::substr($word, $i, 1);
 
                 if (in_array($letter, static::$vowels)) {
-                    $rv      = self::substr($word, ($i + 1));
+                    $rv      = self::substr($word, $i + 1);
                     $rvIndex = $i + 1;
 
                     return true;
@@ -238,7 +238,7 @@ class PortugueseStemmer implements StemmerInterface
                 $letter = self::substr($word, $i, 1);
 
                 if (!in_array($letter, static::$vowels)) {
-                    $rv      = self::substr($word, ($i + 1));
+                    $rv      = self::substr($word, $i + 1);
                     $rvIndex = $i + 1;
 
                     return true;
@@ -259,17 +259,17 @@ class PortugueseStemmer implements StemmerInterface
 
     private static function inRv($position, $rvIndex)
     {
-        return ($position >= $rvIndex);
+        return $position >= $rvIndex;
     }
 
     private static function inR1($position, $r1Index)
     {
-        return ($position >= $r1Index);
+        return $position >= $r1Index;
     }
 
     private static function inR2($position, $r2Index)
     {
-        return ($position >= $r2Index);
+        return $position >= $r2Index;
     }
 
     private static function searchIfInRv($word, $suffixes, $rvIndex)
@@ -489,7 +489,7 @@ class PortugueseStemmer implements StemmerInterface
             $word = self::substr($word, 0, -1);
 
             if (($position2 = self::search($word, ['gu', 'ci'])) !== false) {
-                if (self::inRv(($position2 + 1), $rvIndex)) {
+                if (self::inRv($position2 + 1, $rvIndex)) {
                     $word = self::substr($word, 0, -1);
                 }
             }
@@ -664,8 +664,8 @@ class PortugueseStemmer implements StemmerInterface
                 $values[] = $this_value;
                 if (count($values) == $looking_for) {
                     $number = ($looking_for == 3) ?
-                    (($values[0] % 16) * 4096) + (($values[1] % 64) * 64) + ($values[2] % 64) :
-                    (($values[0] % 32) * 64) + ($values[1] % 64);
+                    ($values[0] % 16 * 4096) + ($values[1] % 64 * 64) + ($values[2] % 64) :
+                    ($values[0] % 32 * 64) + ($values[1] % 64);
                     $unicode[]   = $number;
                     $values      = [];
                     $looking_for = 1;
@@ -693,11 +693,11 @@ class PortugueseStemmer implements StemmerInterface
             if ($unicode < 128) {
                 $utf8 .= chr($unicode);
             } elseif ($unicode < 2048) {
-                $utf8 .= chr(192 + (($unicode - ($unicode % 64)) / 64));
+                $utf8 .= chr(192 + ($unicode - ($unicode % 64)) / 64);
                 $utf8 .= chr(128 + ($unicode % 64));
             } else {
-                $utf8 .= chr(224 + (($unicode - ($unicode % 4096)) / 4096));
-                $utf8 .= chr(128 + ((($unicode % 4096) - ($unicode % 64)) / 64));
+                $utf8 .= chr(224 + ($unicode - ($unicode % 4096)) / 4096);
+                $utf8 .= chr(128 + (($unicode % 4096) - ($unicode % 64)) / 64);
                 $utf8 .= chr(128 + ($unicode % 64));
             }
         }

@@ -61,7 +61,7 @@ class Expression
 
         $priority = 0;
 
-        if ($operator == ("&")) {
+        if ($operator == "&") {
             $priority = 2;
         }
 

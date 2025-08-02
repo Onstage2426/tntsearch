@@ -3,7 +3,7 @@ namespace TeamTNT\TNTSearch\Tokenizer;
 
 abstract class AbstractTokenizer
 {
-    static protected $pattern = '';
+    protected static $pattern = '';
 
     public function getPattern()
     {

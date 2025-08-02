@@ -3,7 +3,7 @@ namespace TeamTNT\TNTSearch\Tokenizer;
 
 class Tokenizer extends AbstractTokenizer implements TokenizerInterface
 {
-    static protected $pattern = '/[^\p{L}\p{N}\p{Pc}\p{Pd}@]+/u';
+    protected static $pattern = '/[^\p{L}\p{N}\p{Pc}\p{Pd}@]+/u';
 
     public function tokenize($text, $stopwords = [])
     {

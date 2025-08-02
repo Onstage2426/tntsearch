@@ -122,10 +122,10 @@ class FrenchStemmer implements StemmerInterface
     private function step0()
     {
         $this->word = preg_replace('#([q])u#u', '$1U', $this->word);
-        $this->word = preg_replace('#(['.$this->plainVowels.'])y#u', '$1Y', $this->word);
-        $this->word = preg_replace('#y(['.$this->plainVowels.'])#u', 'Y$1', $this->word);
-        $this->word = preg_replace('#(['.$this->plainVowels.'])u(['.$this->plainVowels.'])#u', '$1U$2', $this->word);
-        $this->word = preg_replace('#(['.$this->plainVowels.'])i(['.$this->plainVowels.'])#u', '$1I$2', $this->word);
+        $this->word = preg_replace("#([{$this->plainVowels}])y#u", '$1Y', $this->word);
+        $this->word = preg_replace("#y([{$this->plainVowels}])#u", 'Y$1', $this->word);
+        $this->word = preg_replace("#([{$this->plainVowels}])u([{$this->plainVowels}])#u", '$1U$2', $this->word);
+        $this->word = preg_replace("#([{$this->plainVowels}])i([{$this->plainVowels}])#u", '$1I$2', $this->word);
     }
 
     /**
@@ -155,11 +155,10 @@ class FrenchStemmer implements StemmerInterface
             if ($this->inR2($position)) {
                 $this->word = mb_substr($this->word, 0, $position);
 
-                if (($position2 = $this->searchIfInR2(['ic'])) !== false) {
-                    $this->word = mb_substr($this->word, 0, $position2);
-                } else {
-                    $this->word = preg_replace('#(ic)$#u', 'iqU', $this->word);
-                }
+                $position2 = $this->searchIfInR2(['ic']);
+                $this->word = ($position2 === false)
+                    ? preg_replace('#(ic)$#u', 'iqU', $this->word)
+                    : mb_substr($this->word, 0, $position2);
             }
 
             return 3;
@@ -255,19 +254,15 @@ class FrenchStemmer implements StemmerInterface
 
             // if preceded by abil, delete if in R2, else replace by abl, otherwise,
             if (($position = $this->search(['abil'])) !== false) {
-                if ($this->inR2($position)) {
-                    $this->word = mb_substr($this->word, 0, $position);
-                } else {
-                    $this->word = preg_replace('#(abil)$#u', 'abl', $this->word);
-                }
+                $this->word = ($this->inR2($position))
+                    ? mb_substr($this->word, 0, $position)
+                    : preg_replace('#(abil)$#u', 'abl', $this->word);
 
                 // if preceded by ic, delete if in R2, else replace by iqU, otherwise,
             } elseif (($position = $this->search(['ic'])) !== false) {
-                if ($this->inR2($position)) {
-                    $this->word = mb_substr($this->word, 0, $position);
-                } else {
-                    $this->word = preg_replace('#(ic)$#u', 'iqU', $this->word);
-                }
+                $this->word = ($this->inR2($position))
+                    ? mb_substr($this->word, 0, $position)
+                    : preg_replace('#(ic)$#u', 'iqU', $this->word);
 
                 // if preceded by iv, delete if in R2
             } elseif (($position = $this->searchIfInR2(['iv'])) !== false) {
@@ -289,11 +284,9 @@ class FrenchStemmer implements StemmerInterface
                 $this->word = mb_substr($this->word, 0, $position);
 
                 if (($position2 = $this->search(['ic'])) !== false) {
-                    if ($this->inR2($position2)) {
-                        $this->word = mb_substr($this->word, 0, $position2);
-                    } else {
-                        $this->word = preg_replace('#(ic)$#u', 'iqU', $this->word);
-                    }
+                    $this->word = ($this->inR2($position2))
+                        ? mb_substr($this->word, 0, $position2)
+                        : preg_replace('#(ic)$#u', 'iqU', $this->word);
                 }
             }
 
@@ -422,18 +415,15 @@ class FrenchStemmer implements StemmerInterface
             $before = $position - 1;
             $letter = mb_substr($this->word, $before, 1);
 
-            if ( $this->inRv($before) && ($letter === 'e') ) {
-                $this->word = mb_substr($this->word, 0, $before);
-            } else {
-                $this->word = mb_substr($this->word, 0, $position);
-            }
+            $truncatePosition = ( $this->inRv($before) && ($letter === 'e') ) ? $before : $position;
+            $this->word = mb_substr($this->word, 0, $truncatePosition);
 
             return true;
         }
 
         // ions
         //      delete if in R2
-        if ( ($position = $this->searchIfInRv(array('ions'))) !== false) {
+        if ( ($position = $this->searchIfInRv(['ions'])) !== false) {
             if ($this->inR2($position)) {
                 $this->word = mb_substr($this->word, 0, $position);
             }
@@ -498,7 +488,7 @@ class FrenchStemmer implements StemmerInterface
         if (($position = $this->searchIfInRv(['guë'])) !== false) {
             if ($this->inRv($position + 2)) {
                 $this->word = mb_substr($this->word, 0, -1);
-                
+
                 return true;
             }
         }
@@ -523,7 +513,7 @@ class FrenchStemmer implements StemmerInterface
      */
     private function step6()
     {
-        $this->word = preg_replace('#(é|è)([^'.$this->plainVowels.']+)$#u', 'e$2', $this->word);
+        $this->word = preg_replace("#(é|è)([^{$this->plainVowels}]+)$#u", 'e$2', $this->word);
     }
 
     /**
@@ -559,28 +549,28 @@ class FrenchStemmer implements StemmerInterface
         if ( (in_array($first, static::$vowels)) && (in_array($second, static::$vowels)) ) {
             $this->rv = mb_substr($this->word, 3);
             $this->rvIndex = 3;
-            
+
             return true;
         }
 
         // (Exceptionally, par, col or tap, at the begining of a word is also taken to define RV as the region to their right.)
         $begin3 = mb_substr($this->word, 0, 3);
-        
+
         if (in_array($begin3, ['par', 'col', 'tap'])) {
             $this->rv = mb_substr($this->word, 3);
             $this->rvIndex = 3;
-            
+
             return true;
         }
 
         //  otherwise the region after the first vowel not at the beginning of the word,
         for ($i = 1; $i < $length; ++$i) {
             $letter = mb_substr($this->word, $i, 1);
-            
+
             if (in_array($letter, static::$vowels)) {
-                $this->rv = mb_substr($this->word, ($i + 1));
+                $this->rv = mb_substr($this->word, $i + 1);
                 $this->rvIndex = $i + 1;
-                
+
                 return true;
             }
         }
@@ -590,17 +580,17 @@ class FrenchStemmer implements StemmerInterface
 
     protected function inRv($position)
     {
-        return ($position >= $this->rvIndex);
+        return $position >= $this->rvIndex;
     }
 
     protected function inR1($position)
     {
-        return ($position >= $this->r1Index);
+        return $position >= $this->r1Index;
     }
 
     protected function inR2($position)
     {
-        return ($position >= $this->r2Index);
+        return $position >= $this->r2Index;
     }
 
     protected function searchIfInRv($suffixes)
@@ -636,7 +626,7 @@ class FrenchStemmer implements StemmerInterface
      */
     protected function r1()
     {
-        list($this->r1Index, $this->r1) = $this->rx($this->word);
+        [$this->r1Index, $this->r1] = $this->rx($this->word);
     }
 
     /**
@@ -644,7 +634,7 @@ class FrenchStemmer implements StemmerInterface
      */
     protected function r2()
     {
-        list($index, $value) = $this->rx($this->r1);
+        [$index, $value] = $this->rx($this->r1);
 
         $this->r2 = $value;
         $this->r2Index = $this->r1Index + $index;
@@ -666,10 +656,10 @@ class FrenchStemmer implements StemmerInterface
 
         // we search all vowels
         $vowels = [];
-        
+
         for ($i = 0; $i < $length; ++$i) {
             $letter = mb_substr($in, $i, 1);
-            
+
             if (in_array($letter, static::$vowels)) {
                 $vowels[] = $i;
             }
@@ -682,7 +672,7 @@ class FrenchStemmer implements StemmerInterface
 
             if (!in_array($letter, static::$vowels)) {
                 $index = $after + 1;
-                $value = mb_substr($in, ($after + 1));
+                $value = mb_substr($in, $after + 1);
 
                 break;
             }

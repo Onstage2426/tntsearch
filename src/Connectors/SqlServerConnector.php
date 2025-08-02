@@ -11,12 +11,12 @@ class SqlServerConnector extends Connector implements ConnectorInterface {
      *
      * @var array
      */
-    protected array $options = array(
+    protected array $options = [
             PDO::ATTR_CASE => PDO::CASE_NATURAL,
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_ORACLE_NULLS => PDO::NULL_NATURAL,
             PDO::ATTR_STRINGIFY_FETCHES => false,
-    );
+    ];
 
     /**
      * Establish a database connection.
@@ -44,7 +44,7 @@ class SqlServerConnector extends Connector implements ConnectorInterface {
         // First we will create the basic DSN setup as well as the port if it is in
         // in the configuration options. This will give us the basic DSN we will
         // need to establish the PDO connections and return them back for use.
-        $port = isset($config['port']) ? ','.$port : '';
+        $port = isset($config['port']) ? ",{$port}" : '';
 
         if (in_array('dblib', $this->getAvailableDrivers()))
         {

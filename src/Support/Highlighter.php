@@ -41,12 +41,12 @@ class Highlighter
         $tagAttributes = '';
         if (count($this->options['tagOptions'])) {
             foreach ($this->options['tagOptions'] as $attr => $value) {
-                $tagAttributes .= $attr . '="' . $value . '" ';
+                $tagAttributes .= "{$attr}=\"{$value}\" ";
             }
             $tagAttributes = ' ' . trim($tagAttributes);
         }
 
-        $highlight = '<' . $tag . $tagAttributes . '>\1</' . $tag . '>';
+        $highlight = "<{$tag} {$tagAttributes}>\1</{$tag}>";
         $needle = preg_split($this->tokenizer->getPattern(), $needle, -1, PREG_SPLIT_NO_EMPTY);
 
         // Select pattern to use
@@ -73,7 +73,7 @@ class Highlighter
 
             // Escape needle with optional whole word check
             if ($this->options['wholeWord']) {
-                $needle_s = '\b' . $needle_s . '\b';
+                $needle_s = '\b{$needle_s}\b';
             }
 
             // Strip links
@@ -143,12 +143,9 @@ class Highlighter
         if (count($locations) > 2) {
             // skip the first as we check 1 behind
             for ($i = 1; $i < $loccount; $i++) {
-                if ($i == $loccount - 1) {
-                    // at the end
-                    $diff = $locations[$i] - $locations[$i - 1];
-                } else {
-                    $diff = $locations[$i + 1] - $locations[$i];
-                }
+                $diff = ($i == $loccount - 1)
+                    ? $locations[$i] - $locations[$i - 1]
+                    : $locations[$i + 1] - $locations[$i];
 
                 if ($smallestdiff > $diff) {
                     $smallestdiff = $diff;
@@ -190,7 +187,7 @@ class Highlighter
         $startpos = $this->_determineSnipLocation($locations, $prevcount);
         // if we are going to snip too much...
         if ($textlength - $startpos < $rellength) {
-            $startpos = $startpos - ($textlength - $startpos) / 2;
+            $startpos -= ($textlength - $startpos) / 2;
             $startpos = max($startpos, 0);
         }
 

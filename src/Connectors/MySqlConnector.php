@@ -40,7 +40,7 @@ class MySqlConnector extends Connector implements ConnectorInterface
             $charset = $config['charset'];
 
             $names = "set names '{$charset}'".
-                (! is_null($collation) ? " collate '{$collation}'" : '');
+                ($collation !== null ? " collate '{$collation}'" : '');
 
             $connection->prepare($names)->execute();
         }

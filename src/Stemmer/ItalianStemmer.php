@@ -76,9 +76,9 @@ class ItalianStemmer implements StemmerInterface
 
     public function __construct()
     {
-        usort(self::$suffissi_step0, function($a,$b) { return mb_strlen($a)>mb_strlen($b) ? -1 : 1; });
-        usort(self::$suffissi_step1_a, function($a,$b) { return mb_strlen($a)>mb_strlen($b) ? -1 : 1;});
-        usort(self::$suffissi_step2, function($a,$b) { return mb_strlen($a)>mb_strlen($b) ? -1 : 1;});
+        usort(self::$suffissi_step0, fn($a,$b) => mb_strlen($a) <=> mb_strlen($b));
+        usort(self::$suffissi_step1_a, fn($a,$b) => mb_strlen($a) <=> mb_strlen($b));
+        usort(self::$suffissi_step2, fn($a,$b) => mb_strlen($a) <=> mb_strlen($b));
     }
 
     /**
@@ -151,9 +151,7 @@ class ItalianStemmer implements StemmerInterface
     {
         $pattern = '/([aeiouàèìòù])([iu])([aeiouàèìòù])/';
 
-        return preg_replace_callback($pattern, function ($matches) {
-            return strtoupper($matches[0]);
-        }, $str);
+        return preg_replace_callback($pattern, fn($matches) => strtoupper($matches[0]), $str);
     }
 
     private static function returnRV($str)
@@ -279,7 +277,7 @@ class ItalianStemmer implements StemmerInterface
                 }
                 $pos = mb_strpos($str, $suff, $str_len - mb_strlen($suff));
                 if ($pos !== false) {
-                    $pattern = '/'.$suff.'$/';
+                    $pattern = "/{$suff}$/";
                     $ret_str = preg_match($pattern, $r) ? mb_substr($str, 0, $pos) : '';
                     if ($ret_str !== '') {
                         return $ret_str;
@@ -341,17 +339,17 @@ class ItalianStemmer implements StemmerInterface
 
         // Replace with 'log' if in R2
         if (!empty($ret_str = self::deleteStuff(self::$suffissi_step1_c, $str, $str_len, 'r2'))) {
-            return $ret_str.'log';
+            return "{$ret_str}log";
         }
 
         // Replace with 'u' if in R2
         if (!empty($ret_str = self::deleteStuff(self::$suffissi_step1_d, $str, $str_len, 'r2'))) {
-            return $ret_str.'u';
+            return "{$ret_str}u";
         }
 
         // Replace with 'ente' if in R2
         if (!empty($ret_str = self::deleteStuff(self::$suffissi_step1_e, $str, $str_len, 'r2'))) {
-            return $ret_str.'ente';
+            return "{$ret_str}ente";
         }
 
         // Delete if in RV

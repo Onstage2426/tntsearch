@@ -6,7 +6,7 @@ namespace TeamTNT\TNTSearch\Support;
  */
 abstract class AbstractTokenizer
 {
-    static protected $pattern = '';
+    protected static $pattern = '';
 
     public function getPattern()
     {

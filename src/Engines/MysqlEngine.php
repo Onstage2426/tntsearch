@@ -107,7 +107,7 @@ class MysqlEngine extends SqliteEngine
     {
         if (!isset($this->index) || $this->indexName !== $indexName) {
             $this->setIndexName($indexName);
-            $this->index = new PDO('mysql:dbname='.$this->config['database'].';host='.$this->config['host'], $this->config['username'], $this->config['password']);
+            $this->index = new PDO("mysql:dbname={$this->config['database']};host={$this->config['host']}", $this->config['username'], $this->config['password']);
             $this->index->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         }
     }
@@ -405,7 +405,7 @@ class MysqlEngine extends SqliteEngine
         $counter = 0;
 
         foreach ($objects as $name => $object) {
-            $name = str_replace($path . '/', '', $name);
+            $name = str_replace("{$path}/", '', $name);
 
             if (is_callable($this->config['extension'])) {
                 $includeFile = $this->config['extension']($object);

@@ -111,9 +111,7 @@ class TNTSearch
         $keywords = $this->breakIntoTokens($phrase);
         $keywords = new Collection($keywords);
 
-        $keywords = $keywords->map(function ($keyword) {
-            return $this->stemmer->stem($keyword);
-        });
+        $keywords = $keywords->map(fn($keyword) => $this->stemmer->stem($keyword));
         $tfWeight = 1;
         $dlWeight = 0.5;
         $docScores = [];
@@ -143,9 +141,7 @@ class TNTSearch
 
         $totalHits = $docs->count();
 
-        $docs = $docs->map(function ($doc, $key) {
-            return $key;
-        })->take($numOfResults);
+        $docs = $docs->map(fn($doc, $key) => $key)->take($numOfResults);
 
         $stopTimer = microtime(true);
 
@@ -173,7 +169,7 @@ class TNTSearch
         $startTimer = microtime(true);
 
         $expression = new Expression;
-        $postfix = $expression->toPostfix("|" . $phrase);
+        $postfix = $expression->toPostfix("|{$phrase}");
 
         foreach ($postfix as $token) {
             if ($token === '&') {
@@ -187,11 +183,11 @@ class TNTSearch
                     $right = $this->getAllDocumentsForKeyword($this->stemmer->stem($right), true)
                         ->pluck('doc_id');
                 }
-                if (is_null($left)) {
+                if ($left === null) {
                     $left = [];
                 }
 
-                if (is_null($right)) {
+                if ($right === null) {
                     $right = [];
                 }
                 $stack[] = array_values(array_intersect($left, $right));
@@ -208,11 +204,11 @@ class TNTSearch
                         $right = $this->getAllDocumentsForKeyword($this->stemmer->stem($right), true)
                             ->pluck('doc_id');
                     }
-                    if (is_null($left)) {
+                    if ($left === null) {
                         $left = [];
                     }
 
-                    if (is_null($right)) {
+                    if ($right === null) {
                         $right = [];
                     }
                     $stack[] = array_unique(array_merge($left, $right));
@@ -233,11 +229,7 @@ class TNTSearch
                 }
             }
         }
-        if (count($stack)) {
-            $docs = new Collection($stack[0]);
-        } else {
-            $docs = new Collection;
-        }
+        $docs = new Collection($stack[0] ?? []);
 
         $docs = $docs->take($numOfResults);
 
@@ -408,7 +400,7 @@ class TNTSearch
 
     public function info($str)
     {
-        echo $str . "\n";
+        echo "{$str}\n";
     }
 
     public function breakIntoTokens($text)

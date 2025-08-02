@@ -22,7 +22,7 @@ class TNTFuzzyMatch
         $components = count($vec1);
 
         for ($i = 0; $i < $components; $i++) {
-            $prod += ($vec1[$i] * $vec2[$i]);
+            $prod += $vec1[$i] * $vec2[$i];
         }
 
         return $prod;
@@ -41,7 +41,7 @@ class TNTFuzzyMatch
 
     public function angleBetweenVectors(array $a, array $b)
     {
-        $denominator = ($this->norm($a) * $this->norm($b));
+        $denominator = $this->norm($a) * $this->norm($b);
 
         if ($denominator == 0) {
             return 0;
@@ -65,7 +65,7 @@ class TNTFuzzyMatch
             }
         }
 
-        return ($j == $patternLength);
+        return $j == $patternLength;
     }
 
     public function makeVectorSameLength(array $str, array $pattern)

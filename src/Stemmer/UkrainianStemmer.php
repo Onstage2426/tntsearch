@@ -75,7 +75,7 @@ class UkrainianStemmer implements StemmerInterface
                 self::s($RV, '/нн$/u', 'н');
             }
             
-            $stem = $start . $RV;
+            $stem = "$start{$RV}";
         } while (FALSE);
         
         return $stem;

@@ -15,10 +15,12 @@ class JaroWinklerDistance
 
         $lengthOfCommonPrefix = 0;
         for ($i = 0; $i < min(strlen($str1), strlen($str2)); $i++) {
-            if ($str1[$i] == $str2[$i]) {
-                $lengthOfCommonPrefix++;
-            } else {
-                break;
+            switch ($str1[$i]) { 
+                case $str2[$i]:
+                    $lengthOfCommonPrefix++;
+                    break;
+                default:
+                    break 2;
             }
         }
 

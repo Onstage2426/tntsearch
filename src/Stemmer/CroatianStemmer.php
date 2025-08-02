@@ -58,7 +58,7 @@ class CroatianStemmer implements StemmerInterface
             $rules    = explode(" ", $rule);
             $osnova   = $rules[0];
             $nastavak = $rules[1];
-            preg_match("/^(" . $osnova . ")(" . $nastavak . ")$/", $pojavnica, $dioba);
+            preg_match("/^({$osnova})({$nastavak})$/", $pojavnica, $dioba);
             if (!empty($dioba)) {
                 if (self::imaSamoglasnik($dioba[1]) && strlen($dioba[1]) > 1) {
                     return $dioba[1];

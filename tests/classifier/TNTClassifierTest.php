@@ -29,7 +29,7 @@ class TNTClassifierTest extends PHPUnit\Framework\TestCase
             }
 
         }
-        $precision = number_format(($guessCount * 100 / $counter), 4);
+        $precision = number_format($guessCount * 100 / $counter, 4);
         $this->assertGreaterThanOrEqual(98, $precision);
     }
 

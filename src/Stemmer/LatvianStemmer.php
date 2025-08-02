@@ -82,11 +82,9 @@ class LatvianStemmer implements StemmerInterface
             if ($numVowels > $affix[1] and $length >= mb_strlen($affix[0]) + 3 and self::endswith($s, $length,
                     $affix[0])) {
                 $length -= mb_strlen($affix[0]);
-                if ($affix[2]) {
-                    $s = self::unPalatalize($s, $length);
-                } else {
-                    $s = array_slice($s, 0, $length);
-                }
+                $s = ($affix[2])
+                    ? self::unPalatalize($s, $length)
+                    : array_slice($s, 0, $length);
                 break;
             }
         }
