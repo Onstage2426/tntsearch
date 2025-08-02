@@ -3,7 +3,7 @@ namespace TeamTNT\TNTSearch\Tokenizer;
 
 class EdgeNgramTokenizer extends AbstractTokenizer implements TokenizerInterface
 {
-    protected static $pattern = '/[\s,\.]+/';
+    protected static $pattern = "/[\s,\.]+/";
 
     public function tokenize($text, $stopwords = [])
     {
@@ -11,10 +11,15 @@ class EdgeNgramTokenizer extends AbstractTokenizer implements TokenizerInterface
             return [];
         }
 
-        $text = mb_strtolower((string)$text);
+        $text = mb_strtolower((string) $text);
 
         $ngrams = [];
-        $splits = preg_split($this->getPattern(), $text, -1, PREG_SPLIT_NO_EMPTY);
+        $splits = preg_split(
+            $this->getPattern(),
+            $text,
+            -1,
+            PREG_SPLIT_NO_EMPTY,
+        );
 
         foreach ($splits as $split) {
             for ($i = 2; $i <= mb_strlen($split); $i++) {

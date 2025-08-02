@@ -15,7 +15,7 @@ class JaroWinklerDistance
 
         $lengthOfCommonPrefix = 0;
         for ($i = 0; $i < min(strlen($str1), strlen($str2)); $i++) {
-            switch ($str1[$i]) { 
+            switch ($str1[$i]) {
                 case $str2[$i]:
                     $lengthOfCommonPrefix++;
                     break;
@@ -24,8 +24,11 @@ class JaroWinklerDistance
             }
         }
 
-        $lp = min(0.1, 1 / max(strlen($str1), strlen($str2))) * $lengthOfCommonPrefix;
-        $jw = $j + ($lp * (1 - $j));
+        $lp =
+            min(0.1, 1 / max(strlen($str1), strlen($str2))) *
+            $lengthOfCommonPrefix;
+        $jw = $j + $lp * (1 - $j);
+
         return $jw;
     }
 
@@ -49,14 +52,14 @@ class JaroWinklerDistance
         $str2_matches = array_fill(0, $str2_len, 0);
 
         // number of matches and transpositions
-        $matches        = 0;
+        $matches = 0;
         $transpositions = 0;
 
         // find the matches
         for ($i = 0; $i < $str1_len; $i++) {
             // start and end take into account the match distance
             $start = (int) max(0, $i - $match_distance);
-            $end   = (int) min($i + $match_distance + 1, $str2_len);
+            $end = (int) min($i + $match_distance + 1, $str2_len);
 
             for ($k = $start; $k < $end; $k++) {
                 // if $str2 already has a match continue
@@ -109,8 +112,9 @@ class JaroWinklerDistance
         $transpositions /= 2.0;
 
         // return the Jaro distance
-        return (($matches / $str1_len) +
-            ($matches / $str2_len) +
-            (($matches - $transpositions) / $matches)) / 3.0;
+        return ($matches / $str1_len +
+            $matches / $str2_len +
+            ($matches - $transpositions) / $matches) /
+            3.0;
     }
 }

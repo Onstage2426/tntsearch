@@ -30,9 +30,9 @@ class TNTIndexer
     public function __construct(EngineInterface $engine)
     {
         $this->engine = $engine;
-        $this->engine->tokenizer = new Tokenizer;
-        $this->engine->stemmer = new NoStemmer;
-        $this->engine->filereader = new TextFileReader;
+        $this->engine->tokenizer = new Tokenizer();
+        $this->engine->stemmer = new NoStemmer();
+        $this->engine->filereader = new TextFileReader();
     }
 
     /**
@@ -41,7 +41,6 @@ class TNTIndexer
     public function setTokenizer(TokenizerInterface $tokenizer)
     {
         $this->engine->setTokenizer($tokenizer);
-
     }
 
     public function setStopWords(array $stopWords)
@@ -96,7 +95,7 @@ class TNTIndexer
     /**
      * @param string $language - one of: no, arabic, croatian, german, italian, porter, portuguese, russian, ukrainian
      */
-    public function setLanguage(string $language = 'no')
+    public function setLanguage(string $language = "no")
     {
         $this->engine->setLanguage($language);
     }
@@ -125,7 +124,7 @@ class TNTIndexer
     public function setDatabaseHandle(PDO $dbh)
     {
         $this->dbh = $dbh;
-        if ($this->dbh->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql') {
+        if ($this->dbh->getAttribute(PDO::ATTR_DRIVER_NAME) === "mysql") {
             $this->dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
         }
     }
@@ -219,14 +218,15 @@ class TNTIndexer
     {
         $res = $this->engine->getWordFromWordList($word);
 
-        if ($res) {
-            return $res['num_docs'];
-        }
-        return 0;
+        return $res["num_docs"] ?? 0;
     }
 
-    public function buildDictionary($filename, $count = -1, $hits = true, $docs = false)
-    {
+    public function buildDictionary(
+        $filename,
+        $count = -1,
+        $hits = true,
+        $docs = false,
+    ) {
         $this->engine->buildDictionary($filename, $count, $hits, $docs);
     }
 

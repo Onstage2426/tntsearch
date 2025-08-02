@@ -6,7 +6,9 @@ class Rake
 {
     public function __construct(string $language = "english")
     {
-        $stopwords = file_get_contents(__DIR__ . "/../Stopwords/{$language}.json");
+        $stopwords = file_get_contents(
+            __DIR__ . "/../Stopwords/{$language}.json",
+        );
         $this->stopwords = json_decode($stopwords, true);
     }
 
@@ -20,10 +22,8 @@ class Rake
         $oneThird = ceil(count($phraseScores) / 3) + 1;
 
         $phraseScores = array_slice($phraseScores, 0, $oneThird);
-        if ($includeScores) {
-            return $phraseScores;
-        }
-        return array_keys($phraseScores);
+
+        return $includeScores ? $phraseScores : array_keys($phraseScores);
     }
 
     public function generateCandidateKeywords(string $text)
@@ -75,10 +75,13 @@ class Rake
 
         foreach ($phraseList as $phrase) {
             foreach ($phrase as $word) {
-                $wordScore = $this->wordDegree($word, $phraseList) / $this->wordFrequency($word, $phraseList);
+                $wordScore =
+                    $this->wordDegree($word, $phraseList) /
+                    $this->wordFrequency($word, $phraseList);
                 $result[$word] = $wordScore;
             }
         }
+
         return $result;
     }
 
@@ -93,6 +96,7 @@ class Rake
                 }
             }
         }
+
         return $count;
     }
 
@@ -107,6 +111,7 @@ class Rake
                 }
             }
         }
+
         return $count;
     }
 
@@ -116,6 +121,7 @@ class Rake
         foreach ($phraseList as $phrase) {
             $formatedList[] = implode(" ", $phrase);
         }
+
         return $formatedList;
     }
 
@@ -140,6 +146,7 @@ class Rake
                 /xu';
 
         preg_match_all($pat, $str, $arr);
+
         return $arr[2];
     }
 }

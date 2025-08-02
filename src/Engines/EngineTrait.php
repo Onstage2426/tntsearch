@@ -20,7 +20,7 @@ trait EngineTrait
      */
     public function getStoragePath()
     {
-        return $this->config['storage'];
+        return $this->config["storage"];
     }
 
     /**
@@ -31,26 +31,27 @@ trait EngineTrait
      */
     public function createConnector(array $config)
     {
-        if (!isset($config['driver'])) {
-            throw new Exception('A driver must be specified.');
+        if (!isset($config["driver"])) {
+            throw new Exception("A driver must be specified.");
         }
 
-        switch ($config['driver']) {
-            case 'mysql':
-            case 'mariadb':
-                return new MySqlConnector;
-            case 'pgsql':
-                return new PostgresConnector;
-            case 'sqlite':
-                return new SQLiteConnector;
-            case 'sqlsrv':
-                return new SqlServerConnector;
-            case 'filesystem':
-                return new FileSystemConnector;
-            case 'oracledb':
-                return new OracleDBConnector;
+        switch ($config["driver"]) {
+            case "mysql":
+            case "mariadb":
+                return new MySqlConnector();
+            case "pgsql":
+                return new PostgresConnector();
+            case "sqlite":
+                return new SQLiteConnector();
+            case "sqlsrv":
+                return new SqlServerConnector();
+            case "filesystem":
+                return new FileSystemConnector();
+            case "oracledb":
+                return new OracleDBConnector();
         }
-        throw new Exception("Unsupported driver [{$config['driver']}]");
+
+        throw new Exception("Unsupported driver [{$config["driver"]}]");
     }
 
     public function query(string $query)
@@ -66,15 +67,12 @@ trait EngineTrait
     public function setStemmer(StemmerInterface $stemmer)
     {
         $this->stemmer = $stemmer;
-        $this->updateInfoTable('stemmer', get_class($stemmer));
+        $this->updateInfoTable("stemmer", get_class($stemmer));
     }
 
     public function getPrimaryKey()
     {
-        if (isset($this->primaryKey)) {
-            return $this->primaryKey;
-        }
-        return 'id';
+        return $this->primaryKey ?? "id";
     }
 
     public function stemText(string $text)
@@ -82,9 +80,11 @@ trait EngineTrait
         $stemmer = $this->getStemmer();
         $words = $this->breakIntoTokens($text);
         $stems = [];
+
         foreach ($words as $word) {
             $stems[] = $stemmer->stem($word);
         }
+
         return $stems;
     }
 
@@ -98,6 +98,7 @@ trait EngineTrait
         if ($this->decodeHTMLEntities) {
             $text = html_entity_decode($text);
         }
+
         return $this->tokenizer->tokenize($text, $this->stopWords);
     }
 
@@ -124,7 +125,7 @@ trait EngineTrait
     public function setTokenizer(TokenizerInterface $tokenizer)
     {
         $this->tokenizer = $tokenizer;
-        $this->updateInfoTable('tokenizer', get_class($tokenizer));
+        $this->updateInfoTable("tokenizer", get_class($tokenizer));
     }
 
     public function update(int $id, array $document)
@@ -137,7 +138,7 @@ trait EngineTrait
     {
         $this->processDocument(new Collection($document));
         $total = $this->totalDocumentsInCollection() + 1;
-        $this->updateInfoTable('total_documents', $total);
+        $this->updateInfoTable("total_documents", $total);
     }
 
     public function includePrimaryKey()
@@ -155,8 +156,9 @@ trait EngineTrait
         $res = $this->getWordFromWordList($word);
 
         if ($res) {
-            return $res['num_hits'];
+            return $res["num_hits"];
         }
+
         return 0;
     }
 
@@ -170,19 +172,26 @@ trait EngineTrait
         $this->fuzziness = $value;
     }
 
-    public function setLanguage(string $language = 'no')
+    public function setLanguage(string $language = "no")
     {
-        $class = 'TeamTNT\\TNTSearch\\Stemmer\\' . ucfirst(strtolower($language)) . 'Stemmer';
+        $class =
+            "TeamTNT\\TNTSearch\\Stemmer\\" .
+            ucfirst(strtolower($language)) .
+            "Stemmer";
 
         if (!class_exists($class)) {
-            throw new Exception("Language stemmer for [{$language}] does not exist.");
+            throw new Exception(
+                "Language stemmer for [{$language}] does not exist.",
+            );
         }
 
         if (!is_a($class, StemmerInterface::class, true)) {
-            throw new Exception("Language stemmer for [{$language}] does not extend Stemmer interface.");
+            throw new Exception(
+                "Language stemmer for [{$language}] does not extend Stemmer interface.",
+            );
         }
 
-        $this->setStemmer(new $class);
+        $this->setStemmer(new $class());
     }
 
     public function setDatabaseHandle(\PDO $dbh)

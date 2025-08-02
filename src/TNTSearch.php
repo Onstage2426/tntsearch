@@ -35,30 +35,34 @@ class TNTSearch
     {
         $this->config = $config;
 
-        if (isset($this->config['storage'])) {
-            $this->config['storage'] = rtrim($this->config['storage'], '/') . '/';
+        if (isset($this->config["storage"])) {
+            $this->config["storage"] =
+                rtrim($this->config["storage"], "/") . "/";
         }
 
         // Check if 'engine' key is set in the config
-        if (!isset($this->config['engine'])) {
-            $this->config['engine'] = SqliteEngine::class;
+        if (!isset($this->config["engine"])) {
+            $this->config["engine"] = SqliteEngine::class;
         }
 
         // Create the engine instance based on the config
-        $engine = $this->config['engine'];
+        $engine = $this->config["engine"];
 
-        if (!is_string($engine) || !is_a($engine, EngineInterface::class, true)) {
+        if (
+            !is_string($engine) ||
+            !is_a($engine, EngineInterface::class, true)
+        ) {
             throw new InvalidEngineException();
         }
 
-        $this->engine = new $engine;
+        $this->engine = new $engine();
 
         $this->engine->loadConfig($config);
     }
 
     public function __construct()
     {
-        $this->tokenizer = new Tokenizer;
+        $this->tokenizer = new Tokenizer();
     }
 
     /**
@@ -84,6 +88,7 @@ class TNTSearch
         if ($this->dbh) {
             $indexer->setDatabaseHandle($this->dbh);
         }
+
         return $indexer->createIndex($indexName);
     }
 
@@ -111,7 +116,9 @@ class TNTSearch
         $keywords = $this->breakIntoTokens($phrase);
         $keywords = new Collection($keywords);
 
-        $keywords = $keywords->map(fn($keyword) => $this->stemmer->stem($keyword));
+        $keywords = $keywords->map(
+            fn($keyword) => $this->stemmer->stem($keyword),
+        );
         $tfWeight = 1;
         $dlWeight = 0.5;
         $docScores = [];
@@ -119,19 +126,25 @@ class TNTSearch
         $noLimit = $this->engine->fuzzy_no_limit;
 
         foreach ($keywords as $index => $term) {
-            $isLastKeyword = ($keywords->count() - 1) == $index;
+            $isLastKeyword = $keywords->count() - 1 == $index;
             $df = $this->totalMatchingDocuments($term, $isLastKeyword);
             $idf = log($count / max(1, $df));
-            foreach ($this->getAllDocumentsForKeyword($term, $noLimit, $isLastKeyword) as $document) {
-                $docID = $document['doc_id'];
-                $tf = $document['hit_count'];
+            foreach (
+                $this->getAllDocumentsForKeyword(
+                    $term,
+                    $noLimit,
+                    $isLastKeyword,
+                )
+                as $document
+            ) {
+                $docID = $document["doc_id"];
+                $tf = $document["hit_count"];
                 $num = ($tfWeight + 1) * $tf;
-                $denom = $tfWeight
-                    * ((1 - $dlWeight) + $dlWeight)
-                    + $tf;
+                $denom = $tfWeight * (1 - $dlWeight + $dlWeight) + $tf;
                 $score = $idf * ($num / $denom);
-                $docScores[$docID] = isset($docScores[$docID]) ?
-                    $docScores[$docID] + $score : $score;
+                $docScores[$docID] = isset($docScores[$docID])
+                    ? $docScores[$docID] + $score
+                    : $score;
             }
         }
 
@@ -150,10 +163,11 @@ class TNTSearch
         }
 
         return [
-            'ids' => array_keys($docs->toArray()),
-            'hits' => $totalHits,
-            'docScores' => $docScores,
-            'execution_time' => round($stopTimer - $startTimer, 7) * 1000 . " ms",
+            "ids" => array_keys($docs->toArray()),
+            "hits" => $totalHits,
+            "docScores" => $docScores,
+            "execution_time" =>
+                round($stopTimer - $startTimer, 7) * 1000 . " ms",
         ];
     }
 
@@ -168,20 +182,24 @@ class TNTSearch
         $stack = [];
         $startTimer = microtime(true);
 
-        $expression = new Expression;
+        $expression = new Expression();
         $postfix = $expression->toPostfix("|{$phrase}");
 
         foreach ($postfix as $token) {
-            if ($token === '&') {
+            if ($token === "&") {
                 $left = array_pop($stack);
                 $right = array_pop($stack);
                 if (is_string($left)) {
-                    $left = $this->getAllDocumentsForKeyword($this->stemmer->stem($left), true)
-                        ->pluck('doc_id');
+                    $left = $this->getAllDocumentsForKeyword(
+                        $this->stemmer->stem($left),
+                        true,
+                    )->pluck("doc_id");
                 }
                 if (is_string($right)) {
-                    $right = $this->getAllDocumentsForKeyword($this->stemmer->stem($right), true)
-                        ->pluck('doc_id');
+                    $right = $this->getAllDocumentsForKeyword(
+                        $this->stemmer->stem($right),
+                        true,
+                    )->pluck("doc_id");
                 }
                 if ($left === null) {
                     $left = [];
@@ -192,17 +210,21 @@ class TNTSearch
                 }
                 $stack[] = array_values(array_intersect($left, $right));
             } else {
-                if ($token === '|') {
+                if ($token === "|") {
                     $left = array_pop($stack);
                     $right = array_pop($stack);
 
                     if (is_string($left)) {
-                        $left = $this->getAllDocumentsForKeyword($this->stemmer->stem($left), true)
-                            ->pluck('doc_id');
+                        $left = $this->getAllDocumentsForKeyword(
+                            $this->stemmer->stem($left),
+                            true,
+                        )->pluck("doc_id");
                     }
                     if (is_string($right)) {
-                        $right = $this->getAllDocumentsForKeyword($this->stemmer->stem($right), true)
-                            ->pluck('doc_id');
+                        $right = $this->getAllDocumentsForKeyword(
+                            $this->stemmer->stem($right),
+                            true,
+                        )->pluck("doc_id");
                     }
                     if ($left === null) {
                         $left = [];
@@ -213,11 +235,13 @@ class TNTSearch
                     }
                     $stack[] = array_unique(array_merge($left, $right));
                 } else {
-                    if ($token === '~') {
+                    if ($token === "~") {
                         $left = array_pop($stack);
                         if (is_string($left)) {
-                            $left = $this->getAllDocumentsForWhereKeywordNot($this->stemmer->stem($left), true)
-                                ->pluck('doc_id');
+                            $left = $this->getAllDocumentsForWhereKeywordNot(
+                                $this->stemmer->stem($left),
+                                true,
+                            )->pluck("doc_id");
                         }
                         if (is_null($left)) {
                             $left = [];
@@ -229,6 +253,7 @@ class TNTSearch
                 }
             }
         }
+
         $docs = new Collection($stack[0] ?? []);
 
         $docs = $docs->take($numOfResults);
@@ -240,9 +265,10 @@ class TNTSearch
         }
 
         return [
-            'ids' => $docs->toArray(),
-            'hits' => $docs->count(),
-            'execution_time' => round($stopTimer - $startTimer, 7) * 1000 . " ms",
+            "ids" => $docs->toArray(),
+            "hits" => $docs->count(),
+            "execution_time" =>
+                round($stopTimer - $startTimer, 7) * 1000 . " ms",
         ];
     }
 
@@ -253,8 +279,11 @@ class TNTSearch
      *
      * @return Collection
      */
-    public function getAllDocumentsForKeyword($keyword, $noLimit = false, $isLastKeyword = false)
-    {
+    public function getAllDocumentsForKeyword(
+        $keyword,
+        $noLimit = false,
+        $isLastKeyword = false,
+    ) {
         $word = $this->getWordlistByKeyword($keyword, $isLastKeyword, $noLimit);
         if (!isset($word[0])) {
             return new Collection([]);
@@ -272,9 +301,14 @@ class TNTSearch
      *
      * @return Collection
      */
-    public function getAllDocumentsForWhereKeywordNot($keyword, $noLimit = false)
-    {
-        return $this->engine->getAllDocumentsForWhereKeywordNot($keyword, $noLimit);
+    public function getAllDocumentsForWhereKeywordNot(
+        $keyword,
+        $noLimit = false,
+    ) {
+        return $this->engine->getAllDocumentsForWhereKeywordNot(
+            $keyword,
+            $noLimit,
+        );
     }
 
     /**
@@ -287,7 +321,7 @@ class TNTSearch
     {
         $occurance = $this->getWordlistByKeyword($keyword, $isLastWord);
         if (isset($occurance[0])) {
-            return $occurance[0]['num_docs'];
+            return $occurance[0]["num_docs"];
         }
 
         return 0;
@@ -300,9 +334,16 @@ class TNTSearch
      *
      * @return mixed
      */
-    public function getWordlistByKeyword(string $keyword, bool $isLastWord = false, bool $noLimit = false)
-    {
-        return $this->engine->getWordlistByKeyword($keyword, $isLastWord, $noLimit);
+    public function getWordlistByKeyword(
+        string $keyword,
+        bool $isLastWord = false,
+        bool $noLimit = false,
+    ) {
+        return $this->engine->getWordlistByKeyword(
+            $keyword,
+            $isLastWord,
+            $noLimit,
+        );
     }
 
     /**
@@ -317,7 +358,7 @@ class TNTSearch
 
     public function totalDocumentsInCollection()
     {
-        return $this->getValueFromInfoTable('total_documents');
+        return $this->getValueFromInfoTable("total_documents");
     }
 
     public function getStemmer()
@@ -331,24 +372,29 @@ class TNTSearch
             return $stemmer instanceof StemmerInterface;
         }
 
-        return is_string($stemmer) && class_exists($stemmer) && is_a($stemmer, StemmerInterface::class, true);
+        return is_string($stemmer) &&
+            class_exists($stemmer) &&
+            is_a($stemmer, StemmerInterface::class, true);
     }
 
     public function setStemmer()
     {
-        $stemmer = $this->getValueFromInfoTable('stemmer');
+        $stemmer = $this->getValueFromInfoTable("stemmer");
 
         if ($this->isValidStemmer($stemmer)) {
-            $this->stemmer = new $stemmer;
+            $this->stemmer = new $stemmer();
             return;
         }
 
-        if (isset($this->config['stemmer']) && $this->isValidStemmer($this->config['stemmer'])) {
-            $this->stemmer = new $this->config['stemmer'];
+        if (
+            isset($this->config["stemmer"]) &&
+            $this->isValidStemmer($this->config["stemmer"])
+        ) {
+            $this->stemmer = new ($this->config["stemmer"])();
             return;
         }
 
-        $this->stemmer = new NoStemmer;
+        $this->stemmer = new NoStemmer();
     }
 
     private function isValidTokenizer($tokenizer)
@@ -357,23 +403,28 @@ class TNTSearch
             return $tokenizer instanceof TokenizerInterface;
         }
 
-        return is_string($tokenizer) && class_exists($tokenizer) && is_a($tokenizer, TokenizerInterface::class, true);
+        return is_string($tokenizer) &&
+            class_exists($tokenizer) &&
+            is_a($tokenizer, TokenizerInterface::class, true);
     }
 
     public function setTokenizer()
     {
-        $tokenizer = $this->getValueFromInfoTable('tokenizer');
+        $tokenizer = $this->getValueFromInfoTable("tokenizer");
         if ($this->isValidTokenizer($tokenizer)) {
-            $this->tokenizer = new $tokenizer;
+            $this->tokenizer = new $tokenizer();
             return;
         }
 
-        if (isset($this->config['tokenizer']) && $this->isValidTokenizer($this->config['tokenizer'])) {
-            $this->tokenizer = new $this->config['tokenizer'];
+        if (
+            isset($this->config["tokenizer"]) &&
+            $this->isValidTokenizer($this->config["tokenizer"])
+        ) {
+            $this->tokenizer = new ($this->config["tokenizer"])();
             return;
         }
 
-        $this->tokenizer = new Tokenizer;
+        $this->tokenizer = new Tokenizer();
     }
 
     /**
@@ -381,7 +432,7 @@ class TNTSearch
      */
     public function isFileSystemIndex()
     {
-        return $this->getValueFromInfoTable('driver') === 'filesystem';
+        return $this->getValueFromInfoTable("driver") === "filesystem";
     }
 
     public function getValueFromInfoTable($value)
@@ -416,16 +467,27 @@ class TNTSearch
      *
      * @return string
      */
-    public function highlight($text, $needle, $tag = 'em', $options = [])
+    public function highlight($text, $needle, $tag = "em", $options = [])
     {
         $hl = new Highlighter($this->tokenizer);
         return $hl->highlight($text, $needle, $tag, $options);
     }
 
-    public function snippet($words, $fulltext, $rellength = 300, $prevcount = 50, $indicator = '...')
-    {
+    public function snippet(
+        $words,
+        $fulltext,
+        $rellength = 300,
+        $prevcount = 50,
+        $indicator = "...",
+    ) {
         $hl = new Highlighter($this->tokenizer);
-        return $hl->extractRelevant($words, $fulltext, $rellength, $prevcount, $indicator);
+        return $hl->extractRelevant(
+            $words,
+            $fulltext,
+            $rellength,
+            $prevcount,
+            $indicator,
+        );
     }
 
     /**
@@ -537,5 +599,4 @@ class TNTSearch
     {
         return $this->engine->asYouType;
     }
-
 }

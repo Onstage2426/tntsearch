@@ -7,7 +7,7 @@ class Expression
     public function toPostfix($exp)
     {
         $postfix = [];
-        $stack   = [];
+        $stack = [];
 
         $tokens = $this->lex($exp);
         foreach ($tokens as $token) {
@@ -18,11 +18,11 @@ class Expression
                     while (($top = array_pop($stack)) != "(" && !empty($top)) {
                         $postfix[] = $top;
                     }
-
                 } else {
                     while (
-                        count($stack) && !(end($stack) == "(") &&
-                        ($this->priority(end($stack)) >= $this->priority($token))
+                        count($stack) &&
+                        !(end($stack) == "(") &&
+                        $this->priority(end($stack)) >= $this->priority($token)
                     ) {
                         $postfix[] = array_pop($stack);
                     }
@@ -39,16 +39,17 @@ class Expression
 
     public function isOperand($str)
     {
-
         if (
-            ($str == "|") || ($str == "&") || ($str == "~") ||
-            ($str == "(") || ($str == ")")
+            $str == "|" ||
+            $str == "&" ||
+            $str == "~" ||
+            $str == "(" ||
+            $str == ")"
         ) {
             return false;
         }
 
         return true;
-
     }
 
     public function isOperator($str)
@@ -58,7 +59,6 @@ class Expression
 
     public function priority($operator)
     {
-
         $priority = 0;
 
         if ($operator == "&") {
@@ -78,32 +78,32 @@ class Expression
         }
 
         return $priority;
-
     }
 
     public function lex($string)
     {
-        $bad  = [' or ', ' -', ' '];
-        $good = ['|', '~', '&'];
+        $bad = [" or ", " -", " "];
+        $good = ["|", "~", "&"];
 
         $string = str_replace($bad, $good, $string);
         $string = mb_strtolower($string);
-        
-        $tokens = [];
-        $token  = "";
-        foreach (str_split($string) as $char) {
 
+        $tokens = [];
+        $token = "";
+
+        foreach (str_split($string) as $char) {
             if ($this->isOperator($char)) {
                 if ($token) {
                     $tokens[] = $token;
                 }
 
                 $tokens[] = $char;
-                $token    = "";
+                $token = "";
             } else {
                 $token .= $char;
             }
         }
+
         if ($token) {
             $tokens[] = $token;
         }

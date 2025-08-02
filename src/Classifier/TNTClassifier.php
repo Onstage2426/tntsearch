@@ -20,8 +20,8 @@ class TNTClassifier
 
     public function __construct()
     {
-        $this->tokenizer = new Tokenizer;
-        $this->stemmer = new NoStemmer;
+        $this->tokenizer = new Tokenizer();
+        $this->stemmer = new NoStemmer();
     }
 
     public function predict(string $statement)
@@ -29,23 +29,28 @@ class TNTClassifier
         $words = $this->tokenizer->tokenize($statement);
 
         $best_likelihood = -INF;
-        $best_type = '';
+        $best_type = "";
+
         foreach ($this->types as $type) {
             $likelihood = log($this->pTotal($type)); // calculate P(Type)
             $p = 0;
+
             foreach ($words as $word) {
                 $word = $this->stemmer->stem($word);
                 $p += log($this->p($word, $type));
             }
+
             $likelihood += $p; // calculate P(word, Type)
+
             if ($likelihood > $best_likelihood) {
                 $best_likelihood = $likelihood;
                 $best_type = $type;
             }
         }
+
         return [
-            'likelihood' => $best_likelihood,
-            'label' => $best_type,
+            "likelihood" => $best_likelihood,
+            "label" => $best_type,
         ];
     }
 
@@ -63,8 +68,10 @@ class TNTClassifier
             if (!isset($this->words[$type][$word])) {
                 $this->words[$type][$word] = 0;
             }
+
             $this->words[$type][$word]++; // increment the word count for the type
         }
+
         if (!isset($this->documents[$type])) {
             $this->documents[$type] = 0;
         }
@@ -75,6 +82,7 @@ class TNTClassifier
     public function p(string $word, $type)
     {
         $count = 0;
+
         if (isset($this->words[$type][$word])) {
             $count = $this->words[$type][$word];
         }
@@ -83,7 +91,8 @@ class TNTClassifier
             $this->arraySumOfWordType[$type] = array_sum($this->words[$type]);
         }
 
-        return ($count + 1) / ($this->arraySumOfWordType[$type] + $this->vocabularyCount());
+        return ($count + 1) /
+            ($this->arraySumOfWordType[$type] + $this->vocabularyCount());
     }
 
     public function pTotal($type)
@@ -91,7 +100,8 @@ class TNTClassifier
         if ($this->arraySumOfDocuments === null) {
             $this->arraySumOfDocuments = array_sum($this->documents);
         }
-        return ($this->documents[$type]) / $this->arraySumOfDocuments;
+
+        return $this->documents[$type] / $this->arraySumOfDocuments;
     }
 
     public function vocabularyCount()
@@ -106,14 +116,15 @@ class TNTClassifier
                 $words[$word] = 0;
             }
         }
+
         $this->vc = count($words);
+
         return $this->vc;
     }
 
     public function save($path)
     {
-        $s = serialize($this);
-        return file_put_contents($path, $s);
+        return file_put_contents($path, serialize($this));
     }
 
     public function load(string $name)

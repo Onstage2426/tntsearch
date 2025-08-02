@@ -30,12 +30,14 @@ class TNTFuzzyMatch
 
     public function wordToVector(string $word)
     {
-        $alphabet = "aAbBcCčČćĆdDđĐeEfFgGhHiIjJkKlLmMnNoOpPqQrRsSšŠtTvVuUwWxXyYzZžŽ1234567890'+ /";
+        $alphabet =
+            "aAbBcCčČćĆdDđĐeEfFgGhHiIjJkKlLmMnNoOpPqQrRsSšŠtTvVuUwWxXyYzZžŽ1234567890'+ /";
 
         $result = [];
         foreach (str_split($word) as $w) {
             $result[] = strpos($alphabet, $w) + 1000000;
         }
+
         return $result;
     }
 
@@ -75,7 +77,11 @@ class TNTFuzzyMatch
         $b = [];
 
         for ($i = 0; $i < $max && $j < $max; $i++) {
-            if (isset($pattern[$j]) && isset($str[$i]) && $pattern[$j] == $str[$i]) {
+            if (
+                isset($pattern[$j]) &&
+                isset($str[$i]) &&
+                $pattern[$j] == $str[$i]
+            ) {
                 $j++;
                 $b[] = $str[$i];
             } else {
@@ -106,9 +112,15 @@ class TNTFuzzyMatch
         foreach ($res as $caseSensitiveWord) {
             $word = mb_strtolower(trim($caseSensitiveWord));
             $wordVector = $this->wordToVector($word);
-            $normalizedPatternVector = $this->makeVectorSameLength($wordVector, $patternVector);
+            $normalizedPatternVector = $this->makeVectorSameLength(
+                $wordVector,
+                $patternVector,
+            );
 
-            $angle = $this->angleBetweenVectors($wordVector, $normalizedPatternVector);
+            $angle = $this->angleBetweenVectors(
+                $wordVector,
+                $normalizedPatternVector,
+            );
 
             if (strpos($word, $pattern) !== false) {
                 $angle += 0.2;
@@ -117,6 +129,7 @@ class TNTFuzzyMatch
         }
 
         arsort($sorted);
+
         return $sorted;
     }
 
@@ -136,9 +149,15 @@ class TNTFuzzyMatch
         foreach ($res as $word) {
             $word = trim($word);
             $wordVector = $this->wordToVector($word);
-            $normalizedPatternVector = $this->makeVectorSameLength($wordVector, $patternVector);
+            $normalizedPatternVector = $this->makeVectorSameLength(
+                $wordVector,
+                $patternVector,
+            );
 
-            $angle = $this->angleBetweenVectors($wordVector, $normalizedPatternVector);
+            $angle = $this->angleBetweenVectors(
+                $wordVector,
+                $normalizedPatternVector,
+            );
 
             if (strpos($word, $pattern) !== false) {
                 $angle += 0.2;

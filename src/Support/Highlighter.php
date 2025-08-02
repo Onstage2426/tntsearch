@@ -8,11 +8,11 @@ use TeamTNT\TNTSearch\Tokenizer\TokenizerInterface;
 class Highlighter
 {
     protected $options = [
-        'simple' => false,
-        'wholeWord' => true,
-        'caseSensitive' => false,
-        'stripLinks' => false,
-        'tagOptions' => [
+        "simple" => false,
+        "wholeWord" => true,
+        "caseSensitive" => false,
+        "stripLinks" => false,
+        "tagOptions" => [
             // 'class' => 'search-term',             // Example
             // 'title' => 'You searched for this.',  // Example
             // 'data-toggle' => 'tooltip',           // Example
@@ -34,50 +34,59 @@ class Highlighter
      *
      * @return string
      */
-    public function highlight($text, string $needle, string $tag = 'em', array $options = [])
-    {
+    public function highlight(
+        $text,
+        string $needle,
+        string $tag = "em",
+        array $options = [],
+    ) {
         $this->options = array_merge($this->options, $options);
 
-        $tagAttributes = '';
-        if (count($this->options['tagOptions'])) {
-            foreach ($this->options['tagOptions'] as $attr => $value) {
+        $tagAttributes = "";
+        if (count($this->options["tagOptions"])) {
+            foreach ($this->options["tagOptions"] as $attr => $value) {
                 $tagAttributes .= "{$attr}=\"{$value}\" ";
             }
-            $tagAttributes = ' ' . trim($tagAttributes);
+            $tagAttributes = " " . trim($tagAttributes);
         }
 
         $highlight = "<{$tag} {$tagAttributes}>\1</{$tag}>";
-        $needle = preg_split($this->tokenizer->getPattern(), $needle, -1, PREG_SPLIT_NO_EMPTY);
+        $needle = preg_split(
+            $this->tokenizer->getPattern(),
+            $needle,
+            -1,
+            PREG_SPLIT_NO_EMPTY,
+        );
 
         // Select pattern to use
-        if ($this->options['simple']) {
-            $pattern = '#(%s)#';
-            $sl_pattern = '#(%s)#';
+        if ($this->options["simple"]) {
+            $pattern = "#(%s)#";
+            $sl_pattern = "#(%s)#";
         } else {
-            $pattern = '#(?!<.*?)(%s)(?![^<>]*?>)#';
-            $sl_pattern = '#<a\s(?:.*?)>(%s)</a>#';
+            $pattern = "#(?!<.*?)(%s)(?![^<>]*?>)#";
+            $sl_pattern = "#<a\s(?:.*?)>(%s)</a>#";
         }
 
         // Add Forgotten Unicode
-        $pattern .= 'u';
+        $pattern .= "u";
 
         // Case sensitivity
-        if (!($this->options['caseSensitive'])) {
-            $pattern .= 'i';
-            $sl_pattern .= 'i';
+        if (!$this->options["caseSensitive"]) {
+            $pattern .= "i";
+            $sl_pattern .= "i";
         }
 
-        $needle = (array)$needle;
+        $needle = (array) $needle;
         foreach ($needle as $needle_s) {
             $needle_s = preg_quote($needle_s);
 
             // Escape needle with optional whole word check
-            if ($this->options['wholeWord']) {
+            if ($this->options["wholeWord"]) {
                 $needle_s = '\b{$needle_s}\b';
             }
 
             // Strip links
-            if ($this->options['stripLinks']) {
+            if ($this->options["stripLinks"]) {
                 $sl_regex = sprintf($sl_pattern, $needle_s);
                 $text = preg_replace($sl_regex, '\1', $text);
             }
@@ -143,9 +152,10 @@ class Highlighter
         if (count($locations) > 2) {
             // skip the first as we check 1 behind
             for ($i = 1; $i < $loccount; $i++) {
-                $diff = ($i == $loccount - 1)
-                    ? $locations[$i] - $locations[$i - 1]
-                    : $locations[$i + 1] - $locations[$i];
+                $diff =
+                    $i == $loccount - 1
+                        ? $locations[$i] - $locations[$i - 1]
+                        : $locations[$i + 1] - $locations[$i];
 
                 if ($smallestdiff > $diff) {
                     $smallestdiff = $diff;
@@ -154,8 +164,7 @@ class Highlighter
             }
         }
 
-        $startpos = $startpos > $prevcount ? $startpos - $prevcount : 0;
-        return $startpos;
+        return $startpos > $prevcount ? $startpos - $prevcount : 0;
     }
 
     /**
@@ -175,9 +184,14 @@ class Highlighter
         string $fulltext,
         int $rellength = 300,
         int $prevcount = 50,
-        string $indicator = '...'
+        string $indicator = "...",
     ) {
-        $words = preg_split($this->tokenizer->getPattern(), $words, -1, PREG_SPLIT_NO_EMPTY);
+        $words = preg_split(
+            $this->tokenizer->getPattern(),
+            $words,
+            -1,
+            PREG_SPLIT_NO_EMPTY,
+        );
         $textlength = mb_strlen($fulltext);
         if ($textlength <= $rellength) {
             return $fulltext;
@@ -197,7 +211,12 @@ class Highlighter
         }
 
         $reltext = mb_substr($fulltext, $startpos, $rellength);
-        preg_match_all($this->tokenizer->getPattern(), $reltext, $offset, PREG_OFFSET_CAPTURE);
+        preg_match_all(
+            $this->tokenizer->getPattern(),
+            $reltext,
+            $offset,
+            PREG_OFFSET_CAPTURE,
+        );
         // since PREG_OFFSET_CAPTURE returns offset in bytes we have to use mb_strlen(substr()) hack here
         $last = mb_strlen(substr($reltext, 0, end($offset[0])[1]));
         $first = mb_strlen(substr($reltext, 0, $offset[0][0][1]));

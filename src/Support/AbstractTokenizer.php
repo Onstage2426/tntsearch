@@ -6,12 +6,14 @@ namespace TeamTNT\TNTSearch\Support;
  */
 abstract class AbstractTokenizer
 {
-    protected static $pattern = '';
+    protected static $pattern = "";
 
     public function getPattern()
     {
         if (empty(static::$pattern)) {
-            throw new \LogicException("Tokenizer must define split \$pattern value");
+            throw new \LogicException(
+                "Tokenizer must define split \$pattern value",
+            );
         } else {
             return static::$pattern;
         }

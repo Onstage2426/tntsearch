@@ -4,18 +4,18 @@ namespace TeamTNT\TNTSearch\Connectors;
 
 use PDO;
 
-class OracleDBConnector extends Connector implements ConnectorInterface {
-
+class OracleDBConnector extends Connector implements ConnectorInterface
+{
     /**
      * The PDO connection options.
      *
      * @var array
      */
     protected array $options = [
-            PDO::ATTR_CASE => PDO::CASE_NATURAL,
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_ORACLE_NULLS => PDO::NULL_NATURAL,
-            PDO::ATTR_STRINGIFY_FETCHES => false,
+        PDO::ATTR_CASE => PDO::CASE_NATURAL,
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_ORACLE_NULLS => PDO::NULL_NATURAL,
+        PDO::ATTR_STRINGIFY_FETCHES => false,
     ];
 
     /**
@@ -26,9 +26,13 @@ class OracleDBConnector extends Connector implements ConnectorInterface {
      */
     public function connect(array $config)
     {
-        $options = $this->getOptions($config);
+        $connection = $this->createConnection(
+            $this->getDsn($config),
+            $config,
+            $this->getOptions($config),
+        );
 
-        return $this->createConnection($this->getDsn($config), $config, $options);
+        return $connection;
     }
 
     /**
@@ -45,8 +49,7 @@ class OracleDBConnector extends Connector implements ConnectorInterface {
         // in the configuration options. This will give us the basic DSN we will
         // need to establish the PDO connections and return them back for use.
 
-        if (in_array('oci', $this->getAvailableDrivers()))
-        {
+        if (in_array("oci", $this->getAvailableDrivers())) {
             return "oci:dbname={$dbtns};charset=utf8";
         }
     }
@@ -60,5 +63,4 @@ class OracleDBConnector extends Connector implements ConnectorInterface {
     {
         return PDO::getAvailableDrivers();
     }
-
 }

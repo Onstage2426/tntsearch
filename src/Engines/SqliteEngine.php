@@ -58,10 +58,12 @@ class SqliteEngine implements EngineInterface
 
         $this->flushIndex($indexName);
 
-        $this->index = new PDO('sqlite:' . $this->config['storage'] . $indexName);
+        $this->index = new PDO(
+            "sqlite:" . $this->config["storage"] . $indexName,
+        );
         $this->index->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        if ($this->config['wal']) {
+        if ($this->config["wal"]) {
             $this->index->exec("PRAGMA journal_mode=wal;");
         }
 
@@ -71,7 +73,9 @@ class SqliteEngine implements EngineInterface
                     num_hits INTEGER,
                     num_docs INTEGER)");
 
-        $this->index->exec("CREATE UNIQUE INDEX 'main'.'index' ON wordlist ('term');");
+        $this->index->exec(
+            "CREATE UNIQUE INDEX 'main'.'index' ON wordlist ('term');",
+        );
 
         $this->index->exec("CREATE TABLE IF NOT EXISTS doclist (
                     term_id INTEGER,
@@ -93,30 +97,39 @@ class SqliteEngine implements EngineInterface
                     key TEXT,
                     value TEXT)");
 
-        $infoStatement = $this->index->prepare("INSERT INTO info (`key`, `value`) VALUES (:key, :value);");
+        $infoStatement = $this->index->prepare(
+            "INSERT INTO info (`key`, `value`) VALUES (:key, :value);",
+        );
         $infoValues = [
-            [':key' => 'total_documents', ':value' => 0],
-            [':key' => 'stemmer', ':value' => NoStemmer::class],
-            [':key' => 'tokenizer', ':value' => Tokenizer::class],
+            [":key" => "total_documents", ":value" => 0],
+            [":key" => "stemmer", ":value" => NoStemmer::class],
+            [":key" => "tokenizer", ":value" => Tokenizer::class],
         ];
 
         foreach ($infoValues as $value) {
             $infoStatement->execute($value);
         }
 
-        $this->index->exec("CREATE INDEX IF NOT EXISTS 'main'.'term_id_index' ON doclist ('term_id' COLLATE BINARY);");
-        $this->index->exec("CREATE INDEX IF NOT EXISTS 'main'.'doc_id_index' ON doclist ('doc_id');");
+        $this->index->exec(
+            "CREATE INDEX IF NOT EXISTS 'main'.'term_id_index' ON doclist ('term_id' COLLATE BINARY);",
+        );
 
-        if (isset($this->config['stemmer'])) {
-            $this->setStemmer(new $this->config['stemmer']);
+        $this->index->exec(
+            "CREATE INDEX IF NOT EXISTS 'main'.'doc_id_index' ON doclist ('doc_id');",
+        );
+
+        if (isset($this->config["stemmer"])) {
+            $this->setStemmer(new ($this->config["stemmer"])());
         }
 
-        if (isset($this->config['tokenizer'])) {
-            $this->setTokenizer(new $this->config['tokenizer']);
+        if (isset($this->config["tokenizer"])) {
+            $this->setTokenizer(new ($this->config["tokenizer"])());
         }
 
         if (!isset($this->dbh)) {
-            $dbh = $this->createConnector($this->config)->connect($this->config);
+            $dbh = $this->createConnector($this->config)->connect(
+                $this->config,
+            );
 
             if ($dbh instanceof PDO) {
                 $this->dbh = $dbh;
@@ -129,22 +142,24 @@ class SqliteEngine implements EngineInterface
     public function loadConfig(array $config)
     {
         $this->config = $config;
-        $this->config['storage'] = rtrim($this->config['storage'], '/') . '/';
+        $this->config["storage"] = rtrim($this->config["storage"], "/") . "/";
 
-        if (!isset($this->config['driver'])) {
-            $this->config['driver'] = "";
+        if (!isset($this->config["driver"])) {
+            $this->config["driver"] = "";
         }
 
-        if (!isset($this->config['wal'])) {
-            $this->config['wal'] = true;
+        if (!isset($this->config["wal"])) {
+            $this->config["wal"] = true;
         }
     }
 
     public function updateInfoTable(string $key, $value)
     {
-        $this->updateInfoTableStmt = $this->index->prepare('UPDATE info SET value = :value WHERE key = :key');
-        $this->updateInfoTableStmt->bindValue(':key', $key);
-        $this->updateInfoTableStmt->bindValue(':value', $value);
+        $this->updateInfoTableStmt = $this->index->prepare(
+            "UPDATE info SET value = :value WHERE key = :key",
+        );
+        $this->updateInfoTableStmt->bindValue(":key", $key);
+        $this->updateInfoTableStmt->bindValue(":value", $value);
         $this->updateInfoTableStmt->execute();
     }
 
@@ -160,10 +175,11 @@ class SqliteEngine implements EngineInterface
 
     public function run()
     {
-        if ($this->config['driver'] === 'filesystem') {
+        if ($this->config["driver"] === "filesystem") {
             $this->readDocumentsFromFileSystem();
             return;
         }
+
         $result = $this->dbh->query($this->query);
 
         $counter = 0;
@@ -193,7 +209,7 @@ class SqliteEngine implements EngineInterface
             $this->info("Committed");
         }
 
-        $this->updateInfoTable('total_documents', $counter);
+        $this->updateInfoTable("total_documents", $counter);
 
         $this->info("Total rows {$counter}");
     }
@@ -207,11 +223,11 @@ class SqliteEngine implements EngineInterface
         }
 
         $stems = $row->map(function ($columnContent) {
-            if (trim((string)$columnContent) === '') {
+            if (trim((string) $columnContent) === "") {
                 return [];
             }
 
-            return $this->stemText((string)$columnContent);
+            return $this->stemText((string) $columnContent);
         });
 
         $this->saveToIndex($stems, $documentId);
@@ -238,9 +254,15 @@ class SqliteEngine implements EngineInterface
     public function prepareStatementsForIndex()
     {
         if (!$this->statementsPrepared) {
-            $this->insertWordlistStmt = $this->index->prepare("INSERT INTO wordlist (term, num_hits, num_docs) VALUES (:keyword, :hits, :docs)");
-            $this->selectWordlistStmt = $this->index->prepare("SELECT * FROM wordlist WHERE term like :keyword LIMIT 1");
-            $this->updateWordlistStmt = $this->index->prepare("UPDATE wordlist SET num_docs = num_docs + :docs, num_hits = num_hits + :hits WHERE term = :keyword");
+            $this->insertWordlistStmt = $this->index->prepare(
+                "INSERT INTO wordlist (term, num_hits, num_docs) VALUES (:keyword, :hits, :docs)",
+            );
+            $this->selectWordlistStmt = $this->index->prepare(
+                "SELECT * FROM wordlist WHERE term like :keyword LIMIT 1",
+            );
+            $this->updateWordlistStmt = $this->index->prepare(
+                "UPDATE wordlist SET num_docs = num_docs + :docs, num_hits = num_hits + :hits WHERE term = :keyword",
+            );
             $this->statementsPrepared = true;
         }
     }
@@ -257,13 +279,13 @@ class SqliteEngine implements EngineInterface
         $stems->map(function ($column) use (&$terms) {
             foreach ($column as $term) {
                 if (array_key_exists($term, $terms)) {
-                    $terms[$term]['hits']++;
-                    $terms[$term]['docs'] = 1;
+                    $terms[$term]["hits"]++;
+                    $terms[$term]["docs"] = 1;
                 } else {
                     $terms[$term] = [
-                        'hits' => 1,
-                        'docs' => 1,
-                        'id' => 0,
+                        "hits" => 1,
+                        "docs" => 1,
+                        "id" => 0,
                     ];
                 }
             }
@@ -272,42 +294,54 @@ class SqliteEngine implements EngineInterface
         foreach ($terms as $key => $term) {
             try {
                 $this->insertWordlistStmt->bindParam(":keyword", $key);
-                $this->insertWordlistStmt->bindParam(":hits", $term['hits']);
-                $this->insertWordlistStmt->bindParam(":docs", $term['docs']);
+                $this->insertWordlistStmt->bindParam(":hits", $term["hits"]);
+                $this->insertWordlistStmt->bindParam(":docs", $term["docs"]);
                 $this->insertWordlistStmt->execute();
 
-                $lastInsertId = $this->index->query('SELECT MAX(id) FROM wordlist')->fetchColumn();
-                $terms[$key]['id'] = $lastInsertId;
+                $lastInsertId = $this->index
+                    ->query("SELECT MAX(id) FROM wordlist")
+                    ->fetchColumn();
+                $terms[$key]["id"] = $lastInsertId;
 
                 if ($this->inMemory) {
-                    $this->inMemoryTerms[$key] = $terms[$key]['id'];
+                    $this->inMemoryTerms[$key] = $terms[$key]["id"];
                 }
-
             } catch (\Exception $e) {
-
-                switch($e->getCode()) {
+                switch ($e->getCode()) {
                     case 23000:
-                        $this->updateWordlistStmt->bindValue(':docs', $term['docs']);
-                        $this->updateWordlistStmt->bindValue(':hits', $term['hits']);
-                        $this->updateWordlistStmt->bindValue(':keyword', $key);
+                        $this->updateWordlistStmt->bindValue(
+                            ":docs",
+                            $term["docs"],
+                        );
+                        $this->updateWordlistStmt->bindValue(
+                            ":hits",
+                            $term["hits"],
+                        );
+                        $this->updateWordlistStmt->bindValue(":keyword", $key);
                         $this->updateWordlistStmt->execute();
                         if (!$this->inMemory) {
-                            $this->selectWordlistStmt->bindValue(':keyword', $key);
+                            $this->selectWordlistStmt->bindValue(
+                                ":keyword",
+                                $key,
+                            );
                             $this->selectWordlistStmt->execute();
-                            $res = $this->selectWordlistStmt->fetch(PDO::FETCH_ASSOC);
-                            $terms[$key]['id'] = $res['id'];
+                            $res = $this->selectWordlistStmt->fetch(
+                                PDO::FETCH_ASSOC,
+                            );
+                            $terms[$key]["id"] = $res["id"];
                         } else {
-                            $terms[$key]['id'] = $this->inMemoryTerms[$key];
+                            $terms[$key]["id"] = $this->inMemoryTerms[$key];
                         }
                         break;
                     default:
-                        echo "Error while saving wordlist: " . $e->getMessage() . "\n";
+                        echo "Error while saving wordlist: " .
+                            $e->getMessage() .
+                            "\n";
                 }
 
                 // Statements must be refreshed, because in this state they have error attached to them.
                 $this->statementsPrepared = false;
                 $this->prepareStatementsForIndex();
-
             }
         }
 
@@ -316,13 +350,14 @@ class SqliteEngine implements EngineInterface
 
     public function saveDoclist(array $terms, int $docId)
     {
-        $insert = 'INSERT INTO doclist (term_id, doc_id, hit_count) VALUES (:id, :doc, :hits)';
+        $insert =
+            "INSERT INTO doclist (term_id, doc_id, hit_count) VALUES (:id, :doc, :hits)";
         $stmt = $this->index->prepare($insert);
 
         foreach ($terms as $term) {
-            $stmt->bindValue(':id', $term['id']);
-            $stmt->bindValue(':doc', $docId);
-            $stmt->bindValue(':hits', $term['hits']);
+            $stmt->bindValue(":id", $term["id"]);
+            $stmt->bindValue(":doc", $docId);
+            $stmt->bindValue(":hits", $term["hits"]);
             try {
                 $stmt->execute();
             } catch (\Exception $e) {
@@ -332,60 +367,76 @@ class SqliteEngine implements EngineInterface
         }
     }
 
-    public function saveHitList(array $stems, int $docId, array $termsList)
-    {
-    }
+    public function saveHitList(array $stems, int $docId, array $termsList) {}
 
     public function readDocumentsFromFileSystem()
     {
         $exclude = [];
-        if (isset($this->config['exclude'])) {
-            $exclude = $this->config['exclude'];
+        if (isset($this->config["exclude"])) {
+            $exclude = $this->config["exclude"];
         }
 
         $this->index->exec('CREATE TABLE IF NOT EXISTS filemap (
                     id INTEGER PRIMARY KEY,
                     path TEXT)');
-        $path = realpath($this->config['location']);
+        $path = realpath($this->config["location"]);
 
-        $objects = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path),
-            RecursiveIteratorIterator::SELF_FIRST);
+        $objects = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($path),
+            RecursiveIteratorIterator::SELF_FIRST,
+        );
         $this->index->beginTransaction();
         $counter = 0;
 
         foreach ($objects as $name => $object) {
-            $name = str_replace("{$path}/", '', $name);
+            $name = str_replace("{$path}/", "", $name);
 
-            if (is_callable($this->config['extension'])) {
-                $includeFile = $this->config['extension']($object);
-            } elseif (is_array($this->config['extension'])) {
-                $includeFile = in_array($object->getExtension(), $this->config['extension']);
+            if (is_callable($this->config["extension"])) {
+                $includeFile = $this->config["extension"]($object);
+            } elseif (is_array($this->config["extension"])) {
+                $includeFile = in_array(
+                    $object->getExtension(),
+                    $this->config["extension"],
+                );
             } else {
-                $includeFile = stringEndsWith($name, $this->config['extension']);
+                $includeFile = stringEndsWith(
+                    $name,
+                    $this->config["extension"],
+                );
             }
 
             if ($includeFile && !in_array($name, $exclude)) {
                 $counter++;
                 $file = [
-                    'id' => $counter,
-                    'name' => $name,
-                    'content' => $this->filereader->read($object),
+                    "id" => $counter,
+                    "name" => $name,
+                    "content" => $this->filereader->read($object),
                 ];
                 $fileCollection = new Collection($file);
 
-                if (property_exists($this->filereader, 'fileFilterCallback')
-                    && is_callable($this->filereader->fileFilterCallback)) {
-                    $fileCollection = $fileCollection->filter($this->filereader->fileFilterCallback);
+                if (
+                    property_exists($this->filereader, "fileFilterCallback") &&
+                    is_callable($this->filereader->fileFilterCallback)
+                ) {
+                    $fileCollection = $fileCollection->filter(
+                        $this->filereader->fileFilterCallback,
+                    );
                 }
-                if (property_exists($this->filereader, 'fileMapCallback')
-                    && is_callable($this->filereader->fileMapCallback)) {
-                    $fileCollection = $fileCollection->map($this->filereader->fileMapCallback);
+                if (
+                    property_exists($this->filereader, "fileMapCallback") &&
+                    is_callable($this->filereader->fileMapCallback)
+                ) {
+                    $fileCollection = $fileCollection->map(
+                        $this->filereader->fileMapCallback,
+                    );
                 }
 
                 $this->processDocument($fileCollection);
-                $statement = $this->index->prepare("INSERT INTO filemap ( 'id', 'path') values (:counter, :object)");
-                $statement->bindParam(':counter', $counter);
-                $statement->bindParam(':object', $object);
+                $statement = $this->index->prepare(
+                    "INSERT INTO filemap ( 'id', 'path') values (:counter, :object)",
+                );
+                $statement->bindParam(":counter", $counter);
+                $statement->bindParam(":object", $object);
                 $statement->execute();
                 $this->info("Processed {$counter} {$object}");
             }
@@ -393,48 +444,63 @@ class SqliteEngine implements EngineInterface
 
         $this->index->commit();
 
-        $this->index->exec("INSERT INTO info ('key', 'value') values ('total_documents', {$counter})");
-        $this->index->exec("INSERT INTO info ('key', 'value') values ('driver', 'filesystem')");
+        $this->index->exec(
+            "INSERT INTO info ('key', 'value') values ('total_documents', {$counter})",
+        );
+        $this->index->exec(
+            "INSERT INTO info ('key', 'value') values ('driver', 'filesystem')",
+        );
 
         $this->info("Total rows {$counter}");
-        $this->info("Index created: {$this->config['storage']}");
+        $this->info("Index created: {$this->config["storage"]}");
     }
 
     public function delete(int $documentId)
     {
-        $rows = $this->prepareAndExecuteStatement("SELECT * FROM doclist WHERE doc_id = :documentId;", [
-            ['key' => ':documentId', 'value' => $documentId],
-        ])->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->prepareAndExecuteStatement(
+            "SELECT * FROM doclist WHERE doc_id = :documentId;",
+            [["key" => ":documentId", "value" => $documentId]],
+        )->fetchAll(PDO::FETCH_ASSOC);
 
-        $updateStmt = $this->index->prepare('UPDATE wordlist SET num_docs = num_docs - 1, num_hits = num_hits - :hits WHERE id = :term_id;');
+        $updateStmt = $this->index->prepare(
+            "UPDATE wordlist SET num_docs = num_docs - 1, num_hits = num_hits - :hits WHERE id = :term_id;",
+        );
 
         foreach ($rows as $document) {
-            $updateStmt->bindParam(":hits", $document['hit_count']);
-            $updateStmt->bindParam(":term_id", $document['term_id']);
+            $updateStmt->bindParam(":hits", $document["hit_count"]);
+            $updateStmt->bindParam(":term_id", $document["term_id"]);
             $updateStmt->execute();
         }
 
-        $res = $this->prepareAndExecuteStatement('DELETE FROM doclist WHERE doc_id = :documentId;', [
-            ['key' => ':documentId', 'value' => $documentId],
-        ]);
+        $res = $this->prepareAndExecuteStatement(
+            "DELETE FROM doclist WHERE doc_id = :documentId;",
+            [["key" => ":documentId", "value" => $documentId]],
+        );
 
-        $this->prepareAndExecuteStatement('DELETE FROM wordlist WHERE num_hits = 0;');
+        $this->prepareAndExecuteStatement(
+            "DELETE FROM wordlist WHERE num_hits = 0;",
+        );
 
         $affected = $res->rowCount();
 
         if ($affected) {
             $total = $this->totalDocumentsInCollection() - 1;
-            $this->updateInfoTable('total_documents', $total);
+            $this->updateInfoTable("total_documents", $total);
         }
     }
 
-    public function prepareAndExecuteStatement(string $query, array $params = [])
-    {
+    public function prepareAndExecuteStatement(
+        string $query,
+        array $params = [],
+    ) {
         $statemnt = $this->index->prepare($query);
+
         foreach ($params as $param) {
-            $statemnt->bindParam($param['key'], $param['value']);
+            $statemnt->bindParam($param["key"], $param["value"]);
         }
+
         $statemnt->execute();
+
         return $statemnt;
     }
 
@@ -446,7 +512,7 @@ class SqliteEngine implements EngineInterface
         $query = "SELECT * FROM info WHERE key = 'total_documents';";
         $docs = $this->index->query($query);
 
-        return $docs->fetch(PDO::FETCH_ASSOC)['value'];
+        return $docs->fetch(PDO::FETCH_ASSOC)["value"];
     }
 
     public function disableOutput(bool $value)
@@ -456,9 +522,12 @@ class SqliteEngine implements EngineInterface
 
     public function getWordFromWordList(string $word)
     {
-        $selectStmt = $this->index->prepare('SELECT * FROM wordlist WHERE term like :keyword LIMIT 1;');
-        $selectStmt->bindValue(':keyword', $word);
+        $selectStmt = $this->index->prepare(
+            "SELECT * FROM wordlist WHERE term like :keyword LIMIT 1;",
+        );
+        $selectStmt->bindValue(":keyword", $word);
         $selectStmt->execute();
+
         return $selectStmt->fetch(PDO::FETCH_ASSOC);
     }
 
@@ -467,27 +536,34 @@ class SqliteEngine implements EngineInterface
         $res = $this->getWordFromWordList($word);
 
         if ($res) {
-            return $res['num_docs'];
+            return $res["num_docs"];
         }
+
         return 0;
     }
 
-    public function buildDictionary($filename, $count = -1, $hits = true, $docs = false)
-    {
-        $selectStmt = $this->index->prepare('SELECT * FROM wordlist ORDER BY num_hits DESC;');
+    public function buildDictionary(
+        $filename,
+        $count = -1,
+        $hits = true,
+        $docs = false,
+    ) {
+        $selectStmt = $this->index->prepare(
+            "SELECT * FROM wordlist ORDER BY num_hits DESC;",
+        );
         $selectStmt->execute();
 
         $dictionary = "";
         $counter = 0;
 
         while ($row = $selectStmt->fetch(PDO::FETCH_ASSOC)) {
-            $dictionary .= $row['term'];
+            $dictionary .= $row["term"];
             if ($hits) {
-                $dictionary .= "\t" . $row['num_hits'];
+                $dictionary .= "\t" . $row["num_hits"];
             }
 
             if ($docs) {
-                $dictionary .= "\t" . $row['num_docs'];
+                $dictionary .= "\t" . $row["num_docs"];
             }
 
             $counter++;
@@ -503,25 +579,33 @@ class SqliteEngine implements EngineInterface
 
     public function selectIndex(string $indexName)
     {
-        $pathToIndex = $this->config['storage'] . $indexName;
+        $pathToIndex = $this->config["storage"] . $indexName;
         if (!file_exists($pathToIndex)) {
-            throw new IndexNotFoundException("Index {$pathToIndex} does not exist", 1);
+            throw new IndexNotFoundException(
+                "Index {$pathToIndex} does not exist",
+                1,
+            );
         }
         $this->index = new PDO("sqlite:{$pathToIndex}");
         $this->index->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     }
 
-    public function getWordlistByKeyword(string $keyword, bool $isLastWord = false, bool $noLimit = false)
-    {
-        $searchWordlist = 'SELECT * FROM wordlist WHERE term like :keyword LIMIT 1;';
+    public function getWordlistByKeyword(
+        string $keyword,
+        bool $isLastWord = false,
+        bool $noLimit = false,
+    ) {
+        $searchWordlist =
+            "SELECT * FROM wordlist WHERE term like :keyword LIMIT 1;";
         $stmtWord = $this->index->prepare($searchWordlist);
 
         if ($this->asYouType && $isLastWord) {
-            $searchWordlist = 'SELECT * FROM wordlist WHERE term like :keyword ORDER BY length(term) ASC, num_hits DESC LIMIT 1;';
+            $searchWordlist =
+                "SELECT * FROM wordlist WHERE term like :keyword ORDER BY length(term) ASC, num_hits DESC LIMIT 1;";
             $stmtWord = $this->index->prepare($searchWordlist);
-            $stmtWord->bindValue(':keyword', mb_strtolower($keyword) . "%");
+            $stmtWord->bindValue(":keyword", mb_strtolower($keyword) . "%");
         } else {
-            $stmtWord->bindValue(':keyword', mb_strtolower($keyword));
+            $stmtWord->bindValue(":keyword", mb_strtolower($keyword));
         }
         $stmtWord->execute();
         $res = $stmtWord->fetchAll(PDO::FETCH_ASSOC);
@@ -529,6 +613,7 @@ class SqliteEngine implements EngineInterface
         if ($this->fuzziness && (!isset($res[0]) || $noLimit)) {
             return $this->fuzzySearch($keyword);
         }
+
         return $res;
     }
 
@@ -542,12 +627,14 @@ class SqliteEngine implements EngineInterface
     {
         $query = "SELECT * FROM doclist WHERE term_id = :id ORDER BY hit_count DESC LIMIT {$this->maxDocs};";
         if ($noLimit) {
-            $query = 'SELECT * FROM doclist WHERE term_id = :id ORDER BY hit_count DESC;';
+            $query =
+                "SELECT * FROM doclist WHERE term_id = :id ORDER BY hit_count DESC;";
         }
         $stmtDoc = $this->index->prepare($query);
 
-        $stmtDoc->bindValue(':id', $word[0]['id']);
+        $stmtDoc->bindValue(":id", $word[0]["id"]);
         $stmtDoc->execute();
+
         return new Collection($stmtDoc->fetchAll(PDO::FETCH_ASSOC));
     }
 
@@ -557,20 +644,25 @@ class SqliteEngine implements EngineInterface
      *
      * @return Collection
      */
-    public function getAllDocumentsForWhereKeywordNot(string $keyword, bool $noLimit = false)
-    {
+    public function getAllDocumentsForWhereKeywordNot(
+        string $keyword,
+        bool $noLimit = false,
+    ) {
         $word = $this->getWordlistByKeyword($keyword);
         if (!isset($word[0])) {
             return new Collection([]);
         }
+
         $query = "SELECT * FROM doclist WHERE doc_id NOT IN (SELECT doc_id FROM doclist WHERE term_id = :id) GROUP BY doc_id ORDER BY hit_count DESC LIMIT {$this->maxDocs};";
         if ($noLimit) {
-            $query = 'SELECT * FROM doclist WHERE doc_id NOT IN (SELECT doc_id FROM doclist WHERE term_id = :id) GROUP BY doc_id ORDER BY hit_count DESC;';
+            $query =
+                "SELECT * FROM doclist WHERE doc_id NOT IN (SELECT doc_id FROM doclist WHERE term_id = :id) GROUP BY doc_id ORDER BY hit_count DESC;";
         }
-        $stmtDoc = $this->index->prepare($query);
 
-        $stmtDoc->bindValue(':id', $word[0]['id']);
+        $stmtDoc = $this->index->prepare($query);
+        $stmtDoc->bindValue(":id", $word[0]["id"]);
         $stmtDoc->execute();
+
         return new Collection($stmtDoc->fetchAll(PDO::FETCH_ASSOC));
     }
 
@@ -580,7 +672,7 @@ class SqliteEngine implements EngineInterface
         $docs = $this->index->query($query);
 
         if ($ret = $docs->fetch(PDO::FETCH_ASSOC)) {
-            return $ret['value'];
+            return $ret["value"];
         }
 
         return null;
@@ -588,11 +680,12 @@ class SqliteEngine implements EngineInterface
 
     public function filesystemMapIdsToPaths($docs)
     {
-        $query = "SELECT * FROM filemap WHERE id in (" . $docs->implode(', ') . ");";
+        $query =
+            "SELECT * FROM filemap WHERE id in (" . $docs->implode(", ") . ");";
         $res = $this->index->query($query)->fetchAll(PDO::FETCH_ASSOC);
 
         return $docs->map(function ($key) use ($res) {
-            $index = array_search($key, array_column($res, 'id'));
+            $index = array_search($key, array_column($res, "id"));
             return $res[$index];
         });
     }
@@ -607,15 +700,15 @@ class SqliteEngine implements EngineInterface
         $prefix = mb_substr($keyword, 0, $this->fuzzy_prefix_length);
         $searchWordlist = "SELECT * FROM wordlist WHERE term like :keyword ORDER BY num_hits DESC LIMIT {$this->fuzzy_max_expansions};";
         $stmtWord = $this->index->prepare($searchWordlist);
-        $stmtWord->bindValue(':keyword', mb_strtolower($prefix) . "%");
+        $stmtWord->bindValue(":keyword", mb_strtolower($prefix) . "%");
         $stmtWord->execute();
         $matches = $stmtWord->fetchAll(PDO::FETCH_ASSOC);
 
         $resultSet = [];
         foreach ($matches as $match) {
-            $distance = levenshtein($match['term'], $keyword);
+            $distance = levenshtein($match["term"], $keyword);
             if ($distance <= $this->fuzzy_distance) {
-                $match['distance'] = $distance;
+                $match["distance"] = $distance;
                 $resultSet[] = $match;
             }
         }
@@ -624,9 +717,10 @@ class SqliteEngine implements EngineInterface
         $distance = [];
         $hits = [];
         foreach ($resultSet as $key => $row) {
-            $distance[$key] = $row['distance'];
-            $hits[$key] = $row['num_hits'];
+            $distance[$key] = $row["distance"];
+            $hits[$key] = $row["num_hits"];
         }
+
         array_multisort($distance, SORT_ASC, $hits, SORT_DESC, $resultSet);
 
         return $resultSet;
@@ -634,12 +728,12 @@ class SqliteEngine implements EngineInterface
 
     public function getAllDocumentsForFuzzyKeyword(array $words, bool $noLimit)
     {
-        $binding_params = implode(',', array_fill(0, count($words), '?'));
+        $binding_params = implode(",", array_fill(0, count($words), "?"));
         $query = "SELECT * FROM doclist WHERE term_id in ($binding_params) ORDER BY CASE term_id";
         $order_counter = 1;
 
         foreach ($words as $word) {
-            $query .= " WHEN " . $word['id'] . " THEN " . $order_counter++;
+            $query .= " WHEN " . $word["id"] . " THEN " . $order_counter++;
         }
 
         $query .= " END";
@@ -652,17 +746,18 @@ class SqliteEngine implements EngineInterface
 
         $ids = null;
         foreach ($words as $word) {
-            $ids[] = $word['id'];
+            $ids[] = $word["id"];
         }
 
         $stmtDoc->execute($ids);
+
         return new Collection($stmtDoc->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function flushIndex(string $indexName)
     {
-        if (file_exists($this->config['storage'] . $indexName)) {
-            unlink($this->config['storage'] . $indexName);
+        if (file_exists($this->config["storage"] . $indexName)) {
+            unlink($this->config["storage"] . $indexName);
         }
     }
 }
