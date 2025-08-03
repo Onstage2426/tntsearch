@@ -41,26 +41,10 @@ class OracleDBConnector extends Connector implements ConnectorInterface
      * @param  array   $config
      * @return string
      */
-    protected function getDsn(array $config)
+    protected function getDsn(array $config): string
     {
-        extract($config);
+        $dbtns = $config["dbtns"] ?? "";
 
-        // First we will create the basic DSN setup as well as the port if it is in
-        // in the configuration options. This will give us the basic DSN we will
-        // need to establish the PDO connections and return them back for use.
-
-        if (in_array("oci", $this->getAvailableDrivers())) {
-            return "oci:dbname={$dbtns};charset=utf8";
-        }
-    }
-
-    /**
-     * Get the available PDO drivers.
-     *
-     * @return array
-     */
-    protected function getAvailableDrivers()
-    {
-        return PDO::getAvailableDrivers();
+        return "oci:dbname={$dbtns};charset=utf8";
     }
 }

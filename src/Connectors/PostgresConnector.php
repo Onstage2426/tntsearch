@@ -76,29 +76,14 @@ class PostgresConnector extends Connector implements ConnectorInterface
      * @param  array   $config
      * @return string
      */
-    protected function getDsn(array $config)
+    protected function getDsn(array $config): string
     {
-        // First we will create the basic DSN setup as well as the port if it is in
-        // in the configuration options. This will give us the basic DSN we will
-        // need to establish the PDO connections and return them back for use.
-        extract($config, EXTR_SKIP);
+        $host = $config["host"] ?? "localhost";
+        $port = $config["port"] ?? "5432";
+        $database = $config["database"] ?? "";
+        $sslmode = $config["sslmode"] ?? "prefer";
 
-        $host = isset($host) ? "host={$host};" : "";
-
-        $dsn = "pgsql:{$host}dbname={$database}";
-
-        // If a port was specified, we will add it to this Postgres DSN connections
-        // format. Once we have done that we are ready to return this connection
-        // string back out for usage, as this has been fully constructed here.
-        if (isset($config["port"])) {
-            $dsn .= ";port={$port}";
-        }
-
-        if (isset($config["sslmode"])) {
-            $dsn .= ";sslmode={$sslmode}";
-        }
-
-        return $dsn;
+        return "pgsql:host={$host};port={$port};dbname={$database};sslmode={$sslmode}";
     }
 
     /**
