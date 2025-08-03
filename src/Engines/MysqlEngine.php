@@ -496,7 +496,7 @@ class MysqlEngine extends SqliteEngine
                     $this->config["extension"],
                 );
             } else {
-                $includeFile = stringEndsWith(
+                $includeFile = str_ends_with(
                     $name,
                     $this->config["extension"],
                 );

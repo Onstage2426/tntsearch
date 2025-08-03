@@ -73,7 +73,7 @@ composer require teamtnt/tntsearch
 
 Before you proceed, make sure your server meets the following requirements:
 
-* PHP >= 7.4
+* PHP >= 8.1
 * PDO PHP Extension
 * SQLite PHP Extension
 * mbstring PHP Extension

@@ -22,7 +22,7 @@
         "role": "Developer"
     }],
     "require": {
-        "php": "~7.4 || ^8",
+        "php": "^8.1",
         "ext-pdo": "*",
         "ext-mbstring": "*",
         "predis/predis": "^2.2"

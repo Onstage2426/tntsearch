@@ -517,7 +517,7 @@ class RedisEngine implements EngineInterface
                     $this->config["extension"],
                 );
             } else {
-                $includeFile = stringEndsWith(
+                $includeFile = str_ends_with(
                     $name,
                     $this->config["extension"],
                 );
