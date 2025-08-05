@@ -21,10 +21,11 @@ class OracleDBConnector extends Connector implements ConnectorInterface
     /**
      * Establish a database connection.
      *
-     * @param  array  $config
-     * @return PDO
+     * @param array $config
+     *
+     * @return \PDO
      */
-    public function connect(array $config)
+    public function connect(array $config): PDO
     {
         $connection = $this->createConnection(
             $this->getDsn($config),
@@ -38,7 +39,8 @@ class OracleDBConnector extends Connector implements ConnectorInterface
     /**
      * Create a DSN string from a configuration.
      *
-     * @param  array   $config
+     * @param array $config
+     *
      * @return string
      */
     protected function getDsn(array $config): string

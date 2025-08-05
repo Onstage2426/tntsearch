@@ -21,10 +21,11 @@ class PostgresConnector extends Connector implements ConnectorInterface
     /**
      * Establish a database connection.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return \PDO
      */
-    public function connect(array $config)
+    public function connect(array $config): PDO
     {
         // First we'll create the basic DSN and connection instance connecting to the
         // using the configuration option specified by the developer. We will also
@@ -73,7 +74,8 @@ class PostgresConnector extends Connector implements ConnectorInterface
     /**
      * Create a DSN string from a configuration.
      *
-     * @param  array   $config
+     * @param array $config
+     *
      * @return string
      */
     protected function getDsn(array $config): string
@@ -89,10 +91,11 @@ class PostgresConnector extends Connector implements ConnectorInterface
     /**
      * Format the schema for the DSN.
      *
-     * @param  array|string  $schema
+     * @param array|string $schema
+     *
      * @return string
      */
-    protected function formatSchema($schema)
+    protected function formatSchema(array|string $schema): string
     {
         if (is_array($schema)) {
             $schema = implode('", "', $schema);

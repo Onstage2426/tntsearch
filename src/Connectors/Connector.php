@@ -22,10 +22,11 @@ class Connector
     /**
      * Get the PDO options based on the configuration.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return array
      */
-    public function getOptions(array $config)
+    public function getOptions(array $config): array
     {
         return $this->options;
     }
@@ -33,13 +34,17 @@ class Connector
     /**
      * Create a new PDO connection.
      *
-     * @param  string  $dsn
-     * @param  array   $config
-     * @param  array   $options
+     * @param string $dsn
+     * @param array  $config
+     * @param array  $options
+     *
      * @return \PDO
      */
-    public function createConnection(string $dsn, array $config, array $options)
-    {
+    public function createConnection(
+        string $dsn,
+        array $config,
+        array $options,
+    ): PDO {
         $username = $config["username"] ?? null;
         $password = $config["password"] ?? null;
 
@@ -51,7 +56,7 @@ class Connector
      *
      * @return array
      */
-    public function getDefaultOptions()
+    public function getDefaultOptions(): array
     {
         return $this->options;
     }
@@ -59,10 +64,11 @@ class Connector
     /**
      * Set the default PDO connection options.
      *
-     * @param  array  $options
+     * @param array $options
+     *
      * @return void
      */
-    public function setDefaultOptions(array $options)
+    public function setDefaultOptions(array $options): void
     {
         $this->options = $options;
     }

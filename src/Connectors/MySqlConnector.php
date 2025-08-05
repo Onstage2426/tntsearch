@@ -9,10 +9,11 @@ class MySqlConnector extends Connector implements ConnectorInterface
     /**
      * Establish a database connection.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return \PDO
      */
-    public function connect(array $config)
+    public function connect(array $config): PDO
     {
         // We need to grab the PDO options that should be used while making the brand
         // new connection instance. The PDO options control various aspects of the
@@ -57,7 +58,14 @@ class MySqlConnector extends Connector implements ConnectorInterface
         return $connection;
     }
 
-    public function getOptions(array $config)
+    /**
+     * Get PDO options
+     *
+     * @param array $config
+     *
+     * @return array
+     */
+    public function getOptions(array $config): array
     {
         return array_merge(parent::getOptions($config), [
             PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => false,
@@ -69,7 +77,8 @@ class MySqlConnector extends Connector implements ConnectorInterface
      *
      * Chooses socket or host/port based on the 'unix_socket' config value.
      *
-     * @param  array   $config
+     * @param array $config
+     *
      * @return string
      */
     protected function getDsn(array $config): string
@@ -82,10 +91,11 @@ class MySqlConnector extends Connector implements ConnectorInterface
     /**
      * Determine if the given configuration array has a UNIX socket value.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return bool
      */
-    protected function configHasSocket(array $config)
+    protected function configHasSocket(array $config): bool
     {
         return isset($config["unix_socket"]) && !empty($config["unix_socket"]);
     }
@@ -93,21 +103,23 @@ class MySqlConnector extends Connector implements ConnectorInterface
     /**
      * Get the DSN string for a socket configuration.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return string
      */
     protected function getSocketDsn(array $config): string
     {
         $socket = $config["unix_socket"] ?? "";
         $database = $config["database"] ?? "";
-        
+
         return "mysql:unix_socket={$socket};dbname={$database}";
     }
 
     /**
      * Get the DSN string for a host / port configuration.
      *
-     * @param  array  $config
+     * @param array $config
+     *
      * @return string
      */
     protected function getHostDsn(array $config): string
@@ -122,11 +134,12 @@ class MySqlConnector extends Connector implements ConnectorInterface
     /**
      * Set the modes for the connection.
      *
-     * @param  \PDO  $connection
-     * @param  array  $config
+     * @param \PDO  $connection
+     * @param array $config
+     *
      * @return void
      */
-    protected function setModes(PDO $connection, array $config)
+    protected function setModes(PDO $connection, array $config): void
     {
         if (isset($config["modes"])) {
             $modes = implode(",", $config["modes"]);

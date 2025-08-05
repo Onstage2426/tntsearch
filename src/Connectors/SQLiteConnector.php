@@ -3,19 +3,27 @@
 namespace TeamTNT\TNTSearch\Connectors;
 
 use Exception;
+use PDO;
 
 class SQLiteConnector extends Connector implements ConnectorInterface
 {
+    /**
+     * The PDO connection options.
+     *
+     * @var array
+     */
     protected array $options = [];
+    
     /**
      * Establish a database connection.
      *
      * @param  array  $config
-     * @return \PDO
      *
      * @throws \InvalidArgumentException
+     *
+     * @return \PDO
      */
-    public function connect(array $config)
+    public function connect(array $config): PDO
     {
         $options = $this->getOptions($config);
 

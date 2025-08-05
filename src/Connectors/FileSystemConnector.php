@@ -7,12 +7,13 @@ class FileSystemConnector extends Connector implements ConnectorInterface
     /**
      * Establish a database connection.
      *
-     * @param  array  $config
-     * @return null
+     * @param array $config
      *
      * @throws \InvalidArgumentException
+     *
+     * @return null
      */
-    public function connect(array $config)
+    public function connect(array $config): null
     {
         return null;
     }

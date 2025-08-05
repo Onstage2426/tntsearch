@@ -21,10 +21,11 @@ class SqlServerConnector extends Connector implements ConnectorInterface
     /**
      * Establish a database connection.
      *
-     * @param  array  $config
-     * @return PDO
+     * @param array $config
+     *
+     * @return \PDO
      */
-    public function connect(array $config)
+    public function connect(array $config): PDO
     {
         return $this->createConnection(
             $this->getDsn($config),
@@ -36,10 +37,11 @@ class SqlServerConnector extends Connector implements ConnectorInterface
     /**
      * Create a DSN string from a configuration.
      *
-     * @param  array   $config
+     * @param array $config
+     *
      * @return string
      */
-    protected function getDsn(array $config): ?string
+    protected function getDsn(array $config): string
     {
         $host = $config["host"] ?? "localhost";
         $port = $config["port"] ?? "1433";
@@ -62,7 +64,7 @@ class SqlServerConnector extends Connector implements ConnectorInterface
      *
      * @return array
      */
-    protected function getAvailableDrivers()
+    protected function getAvailableDrivers(): array
     {
         return PDO::getAvailableDrivers();
     }
