@@ -8,7 +8,7 @@ interface EngineInterface
 {
     public function loadConfig(array $config);
     public function createIndex(string $indexName);
-    public function updateInfoTable(string $key, $value);
+    public function updateInfoTable(string $key, string $value);
     public function getValueFromInfoTable(string $value);
     public function run();
     public function processDocument(Collection $row);

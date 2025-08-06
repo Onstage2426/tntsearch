@@ -18,7 +18,7 @@ trait EngineTrait
     /**
      * @return string
      */
-    public function getStoragePath()
+    public function getStoragePath(): string
     {
         return $this->config["storage"];
     }
@@ -26,11 +26,13 @@ trait EngineTrait
     /**
      * @param array $config
      *
-     * @return FileSystemConnector|MySqlConnector|OracleDBConnector|PostgresConnector|SQLiteConnector|SqlServerConnector
      * @throws Exception
+     *
+     * @return FileSystemConnector|MySqlConnector|OracleDBConnector|PostgresConnector|SQLiteConnector|SqlServerConnector
      */
-    public function createConnector(array $config)
-    {
+    public function createConnector(
+        array $config,
+    ): FileSystemConnector|MySqlConnector|OracleDBConnector|PostgresConnector|SQLiteConnector|SqlServerConnector {
         if (!isset($config["driver"])) {
             throw new Exception("A driver must be specified.");
         }
@@ -54,28 +56,51 @@ trait EngineTrait
         throw new Exception("Unsupported driver [{$config["driver"]}]");
     }
 
-    public function query(string $query)
+    /**
+     * @param string $query
+     *
+     * @return void
+     */
+    public function query(string $query): void
     {
         $this->query = $query;
     }
 
-    public function disableOutput(bool $value)
+    /**
+     * @param bool $value
+     *
+     * @return void
+     */
+    public function disableOutput(bool $value): void
     {
         $this->disableOutput = $value;
     }
 
-    public function setStemmer(StemmerInterface $stemmer)
+    /**
+     * @param StemmerInterface $stemmer
+     *
+     * @return void
+     */
+    public function setStemmer(StemmerInterface $stemmer): void
     {
         $this->stemmer = $stemmer;
         $this->updateInfoTable("stemmer", get_class($stemmer));
     }
 
-    public function getPrimaryKey()
+    /**
+     * @return string
+     */
+    public function getPrimaryKey(): string
     {
         return $this->primaryKey ?? "id";
     }
 
-    public function stemText(string $text)
+    /**
+     * @param string $text
+     *
+     * @return array
+     */
+    public function stemText(string $text): array
     {
         $stemmer = $this->getStemmer();
         $words = $this->breakIntoTokens($text);
@@ -88,12 +113,20 @@ trait EngineTrait
         return $stems;
     }
 
-    public function getStemmer()
+    /**
+     * @return StemmerInterface
+     */
+    public function getStemmer(): StemmerInterface
     {
         return $this->stemmer;
     }
 
-    public function breakIntoTokens(string $text)
+    /**
+     * @param string $text
+     *
+     * @return array
+     */
+    public function breakIntoTokens(string $text): array
     {
         if ($this->decodeHTMLEntities) {
             $text = html_entity_decode($text);
@@ -102,56 +135,97 @@ trait EngineTrait
         return $this->tokenizer->tokenize($text, $this->stopWords);
     }
 
-    public function info(string $text)
+    /**
+     * @param string $text
+     *
+     * @return void
+     */
+    public function info(string $text): void
     {
         if (!$this->disableOutput) {
             echo $text . PHP_EOL;
         }
     }
 
-    public function setInMemory(bool $value)
+    /**
+     * @param bool $value
+     *
+     * @return void
+     */
+    public function setInMemory(bool $value): void
     {
         $this->inMemory = $value;
     }
 
-    public function setIndex(\PDO $index)
+    /**
+     * @param \PDO $index
+     *
+     * @return void
+     */
+    public function setIndex(\PDO $index): void
     {
         $this->index = $index;
     }
 
     /**
      * @param TokenizerInterface $tokenizer
+     *
+     * @return void
      */
-    public function setTokenizer(TokenizerInterface $tokenizer)
+    public function setTokenizer(TokenizerInterface $tokenizer): void
     {
         $this->tokenizer = $tokenizer;
         $this->updateInfoTable("tokenizer", get_class($tokenizer));
     }
 
-    public function update(int $id, array $document)
+    /**
+     * @param int $id
+     * @param array $document
+     *
+     * @return void
+     */
+    public function update(int $id, array $document): void
     {
         $this->delete($id);
         $this->insert($document);
     }
 
-    public function insert(array $document)
+    /**
+     * @param array $document
+     *
+     * @return void
+     */
+    public function insert(array $document): void
     {
         $this->processDocument(new Collection($document));
         $total = $this->totalDocumentsInCollection() + 1;
         $this->updateInfoTable("total_documents", $total);
     }
 
-    public function includePrimaryKey()
+    /**
+     * @return void
+     */
+    public function includePrimaryKey(): void
     {
         $this->excludePrimaryKey = false;
     }
 
-    public function setPrimaryKey(string $primaryKey)
+    /**
+     * @param string $primaryKey
+     *
+     * @return void
+     */
+    public function setPrimaryKey(string $primaryKey): void
     {
         $this->primaryKey = $primaryKey;
     }
 
-    public function countWordInWordList(string $word)
+    /**
+     * @param string $word
+     *
+     * @return int
+     */
+    public function countWordInWordList(string $word): int
     {
         $res = $this->getWordFromWordList($word);
 
@@ -162,17 +236,34 @@ trait EngineTrait
         return 0;
     }
 
-    public function asYouType(bool $value)
+    /**
+     * @param bool $value
+     *
+     * @return void
+     */
+    public function asYouType(bool $value): void
     {
         $this->asYouType = $value;
     }
 
-    public function fuzziness(bool $value)
+    /**
+     * @param bool $value
+     *
+     * @return void
+     */
+    public function fuzziness(bool $value): void
     {
         $this->fuzziness = $value;
     }
 
-    public function setLanguage(string $language = "no")
+    /**
+     * @param string $language
+     *
+     * @throws Exception
+     *
+     * @return void
+     */
+    public function setLanguage(string $language = "no"): void
     {
         $class =
             "TeamTNT\\TNTSearch\\Stemmer\\" .
@@ -194,6 +285,11 @@ trait EngineTrait
         $this->setStemmer(new $class());
     }
 
+    /**
+     * @param \PDO $dbh
+     *
+     * @return void
+     */
     public function setDatabaseHandle(\PDO $dbh)
     {
         $this->dbh = $dbh;

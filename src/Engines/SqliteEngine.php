@@ -153,7 +153,7 @@ class SqliteEngine implements EngineInterface
         }
     }
 
-    public function updateInfoTable(string $key, $value)
+    public function updateInfoTable(string $key, string $value)
     {
         $this->updateInfoTableStmt = $this->index->prepare(
             "UPDATE info SET value = :value WHERE key = :key",
@@ -543,10 +543,10 @@ class SqliteEngine implements EngineInterface
     }
 
     public function buildDictionary(
-        $filename,
-        $count = -1,
-        $hits = true,
-        $docs = false,
+        string $filename,
+        int $count = -1,
+        bool $hits = true,
+        bool $docs = false,
     ) {
         $selectStmt = $this->index->prepare(
             "SELECT * FROM wordlist ORDER BY num_hits DESC;",

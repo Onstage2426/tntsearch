@@ -38,7 +38,14 @@ class RedisEngine implements EngineInterface
     public int $maxDocs = 500;
     public Client $redis;
 
-    public function loadConfig(array $config)
+    /**
+     * @param array $config
+     *
+     * @throws \Exception
+     *
+     * @return void
+     */
+    public function loadConfig(array $config): void
     {
         $this->config = $config;
 
@@ -72,10 +79,10 @@ class RedisEngine implements EngineInterface
 
     /**
      * @param string $indexName
-     * @return $this
-     * @throws Exception
+     *
+     * @return RedisEngine
      */
-    public function createIndex(string $indexName)
+    public function createIndex(string $indexName): RedisEngine
     {
         $this->flushIndex($indexName);
 
@@ -102,13 +109,24 @@ class RedisEngine implements EngineInterface
         return $this;
     }
 
-    public function updateInfoTable(string $key, $value)
+    /**
+     * @param string $key
+     * @param string $value
+     *
+     * @return void
+     */
+    public function updateInfoTable(string $key, string $value): void
     {
         $redisKey = "{$this->indexName}:info";
         $this->redis->hset($redisKey, $key, $value);
     }
 
-    public function getValueFromInfoTable(string $value)
+    /**
+     * @param string $key
+     *
+     * @return string|null
+     */
+    public function getValueFromInfoTable(string $value): ?string
     {
         $redisKey = "{$this->indexName}:info";
         $ret = $this->redis->hget($redisKey, $value);
@@ -116,7 +134,10 @@ class RedisEngine implements EngineInterface
         return $ret ?? null;
     }
 
-    public function run()
+    /**
+     * @return void
+     */
+    public function run(): void
     {
         if ($this->config["driver"] === "filesystem") {
             $this->readDocumentsFromFileSystem();
@@ -145,7 +166,12 @@ class RedisEngine implements EngineInterface
         $this->info("Total rows {$counter}");
     }
 
-    public function processDocument(Collection $row)
+    /**
+     * @param Collection $row
+     *
+     * @return void
+     */
+    public function processDocument(Collection $row): void
     {
         $documentId = $row->get($this->getPrimaryKey());
 
@@ -164,19 +190,35 @@ class RedisEngine implements EngineInterface
         $this->saveToIndex($stems, $documentId);
     }
 
-    public function saveToIndex(Collection $stems, int $docId)
+    /**
+     * @param Collection $stems
+     * @param int        $docId
+     *
+     * @return void
+     */
+    public function saveToIndex(Collection $stems, int $docId): void
     {
         $terms = $this->saveWordlist($stems);
         $this->saveDoclist($terms, $docId);
         $this->saveHitList($stems->toArray(), $docId, $terms);
     }
 
-    public function selectIndex(string $indexName)
+    /**
+     * @param string $indexName
+     *
+     * @return void
+     */
+    public function selectIndex(string $indexName): void
     {
         $this->indexName = $indexName;
     }
 
-    public function saveWordlist(Collection $stems)
+    /**
+     * @param Collection $stems
+     *
+     * @return array
+     */
+    public function saveWordlist(Collection $stems): array
     {
         $terms = [];
 
@@ -219,7 +261,13 @@ class RedisEngine implements EngineInterface
         return $terms;
     }
 
-    public function saveDoclist(array $terms, int $docId)
+    /**
+     * @param array $terms
+     * @param int $docId
+     *
+     * @return void
+     */
+    public function saveDoclist(array $terms, int $docId): void
     {
         foreach ($terms as $term => $docsHits) {
             $redisKey = "{$this->indexName}:doclist:{$term}:{$docId}";
@@ -227,13 +275,31 @@ class RedisEngine implements EngineInterface
         }
     }
 
-    public function saveHitList(array $stems, int $docId, array $termsList) {}
+    /**
+     * @param array $stems
+     * @param int   $docId
+     * @param array $termsList
+     *
+     * @return void
+     */
+    public function saveHitList(
+        array $stems,
+        int $docId,
+        array $termsList,
+    ): void {}
 
+    /**
+     * @param string $keyword
+     * @param bool   $isLastWord
+     * @param bool   $noLimit
+     *
+     * @return array
+     */
     public function getWordlistByKeyword(
         string $keyword,
         bool $isLastWord = false,
         bool $noLimit = false,
-    ) {
+    ): array {
         $redisKey = "{$this->indexName}:wordlist:{$keyword}";
 
         $return = [];
@@ -297,8 +363,16 @@ class RedisEngine implements EngineInterface
         return $return;
     }
 
-    public function getAllDocumentsForStrictKeyword(array $word, bool $noLimit)
-    {
+    /**
+     * @param array $word
+     * @param bool  $noLimit
+     *
+     * @return Collection
+     */
+    public function getAllDocumentsForStrictKeyword(
+        array $word,
+        bool $noLimit,
+    ): Collection {
         $redisKey = $this->indexName . ":doclist:" . $word[0]["term"] . ":*";
 
         // Get all document IDs from the hash field
@@ -334,7 +408,12 @@ class RedisEngine implements EngineInterface
         return new Collection($documents);
     }
 
-    public function delete(int $documentId)
+    /**
+     * @param int $documentId
+     *
+     * @return void
+     */
+    public function delete(int $documentId): void
     {
         // Fetch the terms associated with the given document ID from doclist
         $doclistKey = "{$this->indexName}:doclist:*:{$documentId}";
@@ -399,14 +478,19 @@ class RedisEngine implements EngineInterface
     }
 
     /**
-     * @return int
+     * @return string|null
      */
-    public function totalDocumentsInCollection()
+    public function totalDocumentsInCollection(): ?string
     {
         return $this->getValueFromInfoTable("total_documents");
     }
 
-    public function getWordFromWordList(string $word)
+    /**
+     * @param string $word
+     *
+     * @return string|null
+     */
+    public function getWordFromWordList(string $word): ?array
     {
         $word = strtolower($word);
         $redisKey = "{$this->indexName}:wordlist:{$word}";
@@ -425,11 +509,11 @@ class RedisEngine implements EngineInterface
     }
 
     /**
-     * @param $keyword
+     * @param string $keyword
      *
      * @return array
      */
-    public function fuzzySearch(string $keyword)
+    public function fuzzySearch(string $keyword): array
     {
         $prefix = mb_substr($keyword, 0, $this->fuzzy_prefix_length);
         $redisKeyPattern = "{$this->indexName}:wordlist:{$prefix}*";
@@ -465,7 +549,13 @@ class RedisEngine implements EngineInterface
         return $resultSet;
     }
 
-    public function getAllDocumentsForFuzzyKeyword(array $words, bool $noLimit)
+    /**
+     * @param array $word
+     * @param bool  $noLimit
+     *
+     * @return Collection
+     */
+    public function getAllDocumentsForFuzzyKeyword(array $words, bool $noLimit): Collection
     {
         $docs = [];
         foreach ($words as $word) {
@@ -491,7 +581,10 @@ class RedisEngine implements EngineInterface
         return new Collection(array_slice($docs, 0, $this->maxDocs));
     }
 
-    public function readDocumentsFromFileSystem()
+    /**
+     * @return void
+     */
+    public function readDocumentsFromFileSystem(): void
     {
         $exclude = [];
         if (isset($this->config["exclude"])) {
@@ -517,10 +610,7 @@ class RedisEngine implements EngineInterface
                     $this->config["extension"],
                 );
             } else {
-                $includeFile = str_ends_with(
-                    $name,
-                    $this->config["extension"],
-                );
+                $includeFile = str_ends_with($name, $this->config["extension"]);
             }
 
             if ($includeFile && !in_array($name, $exclude)) {
@@ -558,6 +648,12 @@ class RedisEngine implements EngineInterface
         }
     }
 
+    /**
+     * @param string $keyword
+     * @param bool   $noLimit
+     *
+     * @return Collection
+     */
     public function getAllDocumentsForWhereKeywordNot(
         string $keyword,
         bool $noLimit = false,
@@ -603,7 +699,12 @@ class RedisEngine implements EngineInterface
         return new Collection($filteredDocuments);
     }
 
-    public function flushIndex(string $indexName)
+    /**
+     * @param string $indexName
+     *
+     * @return void
+     */
+    public function flushIndex(string $indexName): void
     {
         $keys = $this->redis->keys("{$indexName}:*");
 

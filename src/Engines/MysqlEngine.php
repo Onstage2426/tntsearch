@@ -1,12 +1,4 @@
 <?php
-/*
- * Copyright Blackbit digital Commerce GmbH <info@blackbit.de>
- *
- *  This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
- *  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
- */
 
 namespace TeamTNT\TNTSearch\Engines;
 
@@ -21,10 +13,12 @@ class MysqlEngine extends SqliteEngine
 {
     /**
      * @param string $indexName
-     * @return $this
+     *
      * @throws \Exception
+     *
+     * @return MysqlEngine
      */
-    public function createIndex(string $indexName)
+    public function createIndex(string $indexName): MysqlEngine
     {
         $this->setIndexName($indexName);
 
@@ -114,7 +108,12 @@ class MysqlEngine extends SqliteEngine
         return $this;
     }
 
-    public function selectIndex(string $indexName)
+    /**
+     * @param string $indexName
+     *
+     * @return void
+     */
+    public function selectIndex(string $indexName): void
     {
         if (!isset($this->index) || $this->indexName !== $indexName) {
             $this->setIndexName($indexName);
@@ -130,12 +129,22 @@ class MysqlEngine extends SqliteEngine
         }
     }
 
-    private function setIndexName(string $indexName)
+    /**
+     * @param string $indexName
+     *
+     * @return void
+     */
+    private function setIndexName(string $indexName): void
     {
         $this->indexName = preg_replace("/[^a-z0-9_]/i", "_", $indexName);
     }
 
-    public function flushIndex(string $indexName)
+    /**
+     * @param string $indexName
+     *
+     * @return void
+     */
+    public function flushIndex(string $indexName): void
     {
         $this->index->exec("DROP TABLE IF EXISTS {$this->indexName}_wordlist;");
         $this->index->exec("DROP TABLE IF EXISTS {$this->indexName}_doclist;");
@@ -144,7 +153,13 @@ class MysqlEngine extends SqliteEngine
         $this->index->exec("DROP TABLE IF EXISTS {$this->indexName}_info;");
     }
 
-    public function updateInfoTable(string $key, $value)
+    /**
+     * @param string $key
+     * @param string $value
+     *
+     * @return void
+     */
+    public function updateInfoTable(string $key, string $value): void
     {
         $this->updateInfoTableStmt = $this->index->prepare(
             "UPDATE {$this->indexName}_info SET `value` = :value WHERE `key` = :key",
@@ -154,7 +169,12 @@ class MysqlEngine extends SqliteEngine
         $this->updateInfoTableStmt->execute();
     }
 
-    public function getValueFromInfoTable(string $value)
+    /**
+     * @param string $value
+     *
+     * @return mixed
+     */
+    public function getValueFromInfoTable(string $value): mixed
     {
         $query = "SELECT * FROM {$this->indexName}_info WHERE `key` = '{$value}'";
         $docs = $this->index->query($query);
@@ -166,7 +186,10 @@ class MysqlEngine extends SqliteEngine
         return null;
     }
 
-    public function totalDocumentsInCollection()
+    /**
+     * @return mixed
+     */
+    public function totalDocumentsInCollection(): mixed
     {
         $query = "SELECT * FROM {$this->indexName}_info WHERE `key` = 'total_documents'";
         $docs = $this->index->query($query);
@@ -174,7 +197,12 @@ class MysqlEngine extends SqliteEngine
         return $docs->fetch(PDO::FETCH_ASSOC)["value"];
     }
 
-    public function saveWordlist(Collection $stems)
+    /**
+     * @param Collection $stems
+     *
+     * @return array
+     */
+    public function saveWordlist(Collection $stems): array
     {
         $terms = [];
         $stems->map(function ($column) use (&$terms) {
@@ -239,7 +267,13 @@ class MysqlEngine extends SqliteEngine
         return $terms;
     }
 
-    public function saveDoclist(array $terms, int $docId)
+    /**
+     * @param array $terms
+     * @param int   $docId
+     *
+     * @return void
+     */
+    public function saveDoclist(array $terms, int $docId): void
     {
         $insertRows = [];
         foreach ($terms as $term) {
@@ -262,9 +296,25 @@ class MysqlEngine extends SqliteEngine
         );
     }
 
-    public function saveHitList(array $stems, int $docId, array $termsList) {}
+    /**
+     * @param array $items
+     * @param int   $docId
+     * @param array $termsList
+     *
+     * @return void
+     */
+    public function saveHitList(
+        array $stems,
+        int $docId,
+        array $termsList,
+    ): void {}
 
-    public function delete(int $documentId)
+    /**
+     * @param int $documentId
+     *
+     * @return void
+     */
+    public function delete(int $documentId): void
     {
         $rows = $this->prepareAndExecuteStatement(
             "SELECT * FROM {$this->indexName}_doclist WHERE doc_id = :documentId;",
@@ -298,7 +348,12 @@ class MysqlEngine extends SqliteEngine
         }
     }
 
-    public function getWordFromWordList(string $word)
+    /**
+     * @param string $word
+     *
+     * @return array
+     */
+    public function getWordFromWordList(string $word): array
     {
         $selectStmt = $this->index->prepare(
             "SELECT * FROM {$this->indexName}_wordlist WHERE term like :keyword LIMIT 1;",
@@ -309,12 +364,20 @@ class MysqlEngine extends SqliteEngine
         return $selectStmt->fetch(PDO::FETCH_ASSOC);
     }
 
+    /**
+     * @param string $filename
+     * @param int    $count
+     * @param bool   $hits
+     * @param bool   $docs
+     *
+     * @return void
+     */
     public function buildDictionary(
-        $filename,
-        $count = -1,
-        $hits = true,
-        $docs = false,
-    ) {
+        string $filename,
+        int $count = -1,
+        bool $hits = true,
+        bool $docs = false,
+    ): void {
         $selectStmt = $this->index->prepare(
             "SELECT * FROM {$this->indexName}_wordlist ORDER BY num_hits DESC;",
         );
@@ -344,11 +407,18 @@ class MysqlEngine extends SqliteEngine
         file_put_contents($filename, $dictionary, LOCK_EX);
     }
 
+    /**
+     * @param string $keyword
+     * @param bool   $isLastWord
+     * @param bool   $noLimit
+     *
+     * @return array
+     */
     public function getWordlistByKeyword(
         string $keyword,
         bool $isLastWord = false,
         bool $noLimit = false,
-    ) {
+    ): array {
         $searchWordlist = "SELECT * FROM {$this->indexName}_wordlist WHERE term like :keyword LIMIT 1;";
         $stmtWord = $this->index->prepare($searchWordlist);
 
@@ -359,6 +429,7 @@ class MysqlEngine extends SqliteEngine
         } else {
             $stmtWord->bindValue(":keyword", mb_strtolower($keyword));
         }
+
         $stmtWord->execute();
         $res = $stmtWord->fetchAll(PDO::FETCH_ASSOC);
 
@@ -369,7 +440,12 @@ class MysqlEngine extends SqliteEngine
         return $res;
     }
 
-    public function fuzzySearch(string $keyword)
+    /**
+     * @param string $keyword
+     *
+     * @return array
+     */
+    public function fuzzySearch(string $keyword): array
     {
         $prefix = mb_substr($keyword, 0, $this->fuzzy_prefix_length);
         $searchWordlist = "SELECT * FROM {$this->indexName}_wordlist WHERE term like :keyword ORDER BY num_hits DESC LIMIT {$this->fuzzy_max_expansions};";
@@ -400,6 +476,12 @@ class MysqlEngine extends SqliteEngine
         return $resultSet;
     }
 
+    /**
+     * @param array $words
+     * @param bool  $nolimit
+     *
+     * @return Collection
+     */
     public function getAllDocumentsForFuzzyKeyword(array $words, bool $noLimit)
     {
         $binding_params = implode(",", array_fill(0, count($words), "?"));
@@ -428,6 +510,12 @@ class MysqlEngine extends SqliteEngine
         return new Collection($stmtDoc->fetchAll(PDO::FETCH_ASSOC));
     }
 
+    /**
+     * @param string $keyword
+     * @param bool   $nolimit
+     *
+     * @return Collection
+     */
     public function getAllDocumentsForWhereKeywordNot(
         string $keyword,
         bool $noLimit = false,
@@ -450,6 +538,12 @@ class MysqlEngine extends SqliteEngine
         return new Collection($stmtDoc->fetchAll(PDO::FETCH_ASSOC));
     }
 
+    /**
+     * @param array $keyword
+     * @param bool  $nolimit
+     *
+     * @return Collection
+     */
     public function getAllDocumentsForStrictKeyword(array $word, bool $noLimit)
     {
         $query = "SELECT * FROM {$this->indexName}_doclist WHERE term_id = :id ORDER BY hit_count DESC LIMIT {$this->maxDocs};";
@@ -464,7 +558,10 @@ class MysqlEngine extends SqliteEngine
         return new Collection($stmtDoc->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function readDocumentsFromFileSystem()
+    /**
+     * @return void
+     */
+    public function readDocumentsFromFileSystem(): void
     {
         $exclude = [];
         if (isset($this->config["exclude"])) {
@@ -496,10 +593,7 @@ class MysqlEngine extends SqliteEngine
                     $this->config["extension"],
                 );
             } else {
-                $includeFile = str_ends_with(
-                    $name,
-                    $this->config["extension"],
-                );
+                $includeFile = str_ends_with($name, $this->config["extension"]);
             }
 
             if ($includeFile && !in_array($name, $exclude)) {
