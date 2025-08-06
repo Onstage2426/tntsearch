@@ -13,7 +13,7 @@ class SQLiteConnector extends Connector implements ConnectorInterface
      * @var array
      */
     protected array $options = [];
-    
+
     /**
      * Establish a database connection.
      *
